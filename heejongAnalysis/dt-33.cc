@@ -175,6 +175,28 @@ main(int argc, char **argv){
   }
 
 
+  //output ntuple file
+  TFile *fout = new TFile("output.root","RECREATE");
+  TTree* treeOut = new TTree("tree","tree");
+  
+  float ch1Amp = 0;
+  float ch2Amp = 0;
+  float ch3Amp = 0;
+  float ch4Amp = 0;
+  float ch1Time = 0;
+  float ch2Time = 0;
+  float ch3Time = 0;
+  float ch4Time = 0;
+  treeOut->Branch("ch1Amp",&ch1Amp,"ch1Amp/F");
+  treeOut->Branch("ch2Amp",&ch2Amp,"ch2Amp/F");
+  treeOut->Branch("ch3Amp",&ch3Amp,"ch3Amp/F");
+  treeOut->Branch("ch4Amp",&ch4Amp,"ch4Amp/F");
+  treeOut->Branch("ch1Time",&ch1Time,"ch1Time/F");
+  treeOut->Branch("ch2Time",&ch2Time,"ch2Time/F");
+  treeOut->Branch("ch3Time",&ch3Time,"ch3Time/F");
+  treeOut->Branch("ch4Time",&ch4Time,"ch4Time/F");
+
+
   // loop over root files
     
   char title[200];  
@@ -288,15 +310,15 @@ main(int argc, char **argv){
     }  
 
     
-    //For Photonis
+    // //For Photonis
     // if(  m_b1_c[0][tc_max1] < 50 || m_b1_c[2][tc_max3] < 100 ) continue;
     // if(  m_b1_c[0][tc_max1] > 490 || m_b1_c[2][tc_max3] > 490 ) continue;
     // if(  m_b1_c[3][tc_max4] < 100 ) continue; //cherenkov cut
 
     // //For photek -> photek
-    if(  m_b1_c[0][tc_max1] < 20 || m_b1_c[1][tc_max2] < 20 ) continue;
-    if(  m_b1_c[0][tc_max1] > 490 || m_b1_c[1][tc_max2] > 490) continue;
-    if(  m_b1_c[3][tc_max4] < 100 ) continue; //cherenkov cut
+    if(  m_b1_c[0][tc_max1] < 10 || m_b1_c[1][tc_max2] < 10 ) continue;
+    // if(  m_b1_c[0][tc_max1] > 490 || m_b1_c[1][tc_max2] > 490) continue;
+    //if(  m_b1_c[3][tc_max4] < 100 ) continue; //cherenkov cut
 
     // //For photek -> photek protons
     // if(  m_b1_c[0][tc_max1] < 100 || m_b1_c[1][tc_max2] < 50 ) continue;
@@ -340,8 +362,7 @@ main(int argc, char **argv){
     h_tc[2]->Fill( tc1);
 
 
-    h_tc_diff->Fill( tc_max3 -tc_max1);
-
+    h_tc_diff->Fill( tc_max2 -tc_max1);
 
     // if( tc_max1 < 50 || tc_max2 < 50 ) continue;
      
@@ -369,7 +390,7 @@ main(int argc, char **argv){
 
     double *wf04_y = wf04->Get_samp_y();
     double *wf14_y = wf14->Get_samp_y();
-    // double *wf24_y = wf24->Get_samp_y();
+    //double *wf24_y = wf24->Get_samp_y();
 
     h_rise[0]->Fill( wf03->Risetime19());
     h_rise[1]->Fill( wf13->Risetime19());
@@ -378,7 +399,7 @@ main(int argc, char **argv){
     for( int i = 0; i < 400; i++){
       h_ped2[0]->Fill( wf04_y[i]);
       h_ped2[1]->Fill( wf14_y[i]);
-      //h_ped2[2]->Fill( wf24_y[i]);
+       //h_ped2[2]->Fill( wf24_y[i]);
     }
 
     h_amp2[0]->Fill( wf04->Amplitude());
@@ -402,8 +423,8 @@ main(int argc, char **argv){
       cfd[1][k] = t1_cfd[k];
     }
 
-    //    double* t2_led = wf24->LED( th_led, 48);	  
-    //double* t2_cfd = wf24->CFD( th_cfd, 48);	  
+    // // double* t2_led = wf24->LED( th_led, 48);	  
+    // double* t2_cfd = wf24->CFD( th_cfd, 48);	  
 	  
     // for( int k = 0; k < 48; k++){
     //   cfd[2][k] = t2_cfd[k];
@@ -413,6 +434,19 @@ main(int argc, char **argv){
     for( int i = 0; i < 48; i++){
       h_cfd[i]->Fill( cfd[1][i]-cfd[0][i]);
     }
+
+
+    //Fill output tree
+    ch1Amp = wf04->Amplitude();
+    ch2Amp = wf14->Amplitude();
+    ch3Amp = m_b1_c[2][tc_max3];
+    //ch3Amp = wf24->Amplitude();
+    ch4Amp = m_b1_c[3][tc_max4];
+    ch1Time = cfd[0][37];
+    ch2Time = cfd[1][37];
+    ch3Time = cfd[2][37];
+    ch4Time = cfd[3][37];
+    treeOut->Fill();
 
     delete wf01;
     delete wf02;
@@ -521,7 +555,7 @@ main(int argc, char **argv){
 	maxbin = h_cfd[i*6+j]->GetMaximumBin();
 	mean =  h_cfd[i*6+j]->GetBinCenter(maxbin);
 	cout << "here2 " << i << " " << j << "\n";
-	h_cfd[i*6+j]->SetAxisRange( 0.1, 0.5, "x");
+	h_cfd[i*6+j]->SetAxisRange( 0.2, 0.4, "x");
 	h_cfd[i*6+j]->Draw();
 
 	cout << "here3 " << i << " " << j << "\n";
@@ -529,7 +563,7 @@ main(int argc, char **argv){
 	if(1){
 	  //h_cfd[i*6+j]->Fit("gaus", "QE", 0, mean-0.1, mean+0.1);     
 	  //h_cfd[i*6+j]->Fit("gaus", "QE", 0, 0.35, 0.5);     
-	  h_cfd[i*6+j]->Fit("gaus", "QE", 0, 0.1, 0.5);     
+	  h_cfd[i*6+j]->Fit("gaus", "QE", 0, 0.2, 0.4);     
 	  tcfd_mean[i*6+j] = h_cfd[i*6+j]->GetFunction("gaus")->GetParameter(1)*1000;
 	  tcfd[i*6+j] = h_cfd[i*6+j]->GetFunction("gaus")->GetParameter(2)*1000*2.35;
 	  e_cfd[i*6+j] = h_cfd[i*6+j]->GetFunction("gaus")->GetParError(2)*1000*2.35;
@@ -541,7 +575,12 @@ main(int argc, char **argv){
     }
   }
   //  printf("%s :  dt_mean   =  %8.3f,   dt_fwhm =  %8.3f\n", argv[1], tcfd_mean[30], tcfd[30]);
+
+  //treeOut->Write();
+  fout->WriteTObject(treeOut);
+
   psf1->Close();
+  fout->Close();
 
   return 0;
 }
