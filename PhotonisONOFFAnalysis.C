@@ -129,37 +129,37 @@ void MakeAmplitudePlot(string filename, string plotname, double scalefactor, dou
   c->SaveAs( Form("%s_amplitude.pdf", plotname.c_str()) );
 
 
-  //time resolution plot
-  c = new TCanvas("c","c",600,600);
+  // //time resolution plot
+  // c = new TCanvas("c","c",600,600);
   
-  dt->SetAxisRange(2.8,3.6,"X");
-  dt->SetTitle("");
-  dt->GetXaxis()->SetTitle("#Delta t [ns]");
-  dt->GetYaxis()->SetTitle("Number of Events");
-  dt->GetYaxis()->SetTitleOffset(1.3);
-  dt->SetMaximum(1.2*dt->GetMaximum());
-  dt->Draw();
-  dt->SetStats(0);
-  dt->Fit("gaus","","",2.5,4);
-  TVirtualFitter * fitter = TVirtualFitter::GetFitter();
+  // dt->SetAxisRange(2.8,3.6,"X");
+  // dt->SetTitle("");
+  // dt->GetXaxis()->SetTitle("#Delta t [ns]");
+  // dt->GetYaxis()->SetTitle("Number of Events");
+  // dt->GetYaxis()->SetTitleOffset(1.3);
+  // dt->SetMaximum(1.2*dt->GetMaximum());
+  // dt->Draw();
+  // dt->SetStats(0);
+  // dt->Fit("gaus","","",2.5,4);
+  // TVirtualFitter * fitter = TVirtualFitter::GetFitter();
   
-  TLatex *tex = new TLatex();
-  tex->SetNDC();
-  tex->SetTextSize(0.040);
-  tex->SetTextFont(42);
-  tex->SetTextColor(kBlack);
-  tex->DrawLatex(0.53, 0.80, Form("#sigma = %.0f #pm %.0f ps",1000*fitter->GetParameter(2),1000*fitter->GetParError(2)));
-  // tex->DrawLatex(0.53, 0.85, Form("Mean = %.2f #pm %.2f ps",fitter->GetParameter(1),fitter->GetParError(1)));
-  tex->DrawLatex(0.53, 0.85, Form("Mean = %.1f ps",fitter->GetParameter(1)));
+  // TLatex *tex = new TLatex();
+  // tex->SetNDC();
+  // tex->SetTextSize(0.040);
+  // tex->SetTextFont(42);
+  // tex->SetTextColor(kBlack);
+  // tex->DrawLatex(0.53, 0.80, Form("#sigma = %.0f #pm %.0f ps",1000*fitter->GetParameter(2),1000*fitter->GetParError(2)));
+  // // tex->DrawLatex(0.53, 0.85, Form("Mean = %.2f #pm %.2f ps",fitter->GetParameter(1),fitter->GetParError(1)));
+  // tex->DrawLatex(0.53, 0.85, Form("Mean = %.1f ps",fitter->GetParameter(1)));
  
-  c->SaveAs( Form("%s_dt.gif", plotname.c_str()) );
-  c->SaveAs( Form("%s_dt.pdf", plotname.c_str()) );
+  // c->SaveAs( Form("%s_dt.gif", plotname.c_str()) );
+  // c->SaveAs( Form("%s_dt.pdf", plotname.c_str()) );
 
-  double effErrlow = Numerator / Denominator  - TEfficiency::ClopperPearson((UInt_t)Denominator, (UInt_t)Numerator, 0.68269, kFALSE);
-  double effErrhigh = TEfficiency::ClopperPearson((UInt_t)Denominator, (UInt_t)Numerator, 0.68269, kTRUE) - Numerator / Denominator;
-  cout << "Photonis Detection Efficiency (Amplitude > 20mV) : " << Numerator / Denominator 
-       << " + " << effErrhigh << " - " << effErrlow
-       << "\n";
+  // double effErrlow = Numerator / Denominator  - TEfficiency::ClopperPearson((UInt_t)Denominator, (UInt_t)Numerator, 0.68269, kFALSE);
+  // double effErrhigh = TEfficiency::ClopperPearson((UInt_t)Denominator, (UInt_t)Numerator, 0.68269, kTRUE) - Numerator / Denominator;
+  // cout << "Photonis Detection Efficiency (Amplitude > 20mV) : " << Numerator / Denominator 
+  //      << " + " << effErrhigh << " - " << effErrlow
+  //      << "\n";
 
   
 }
@@ -189,7 +189,8 @@ void MakeAmplitudeVsShowerDepthGraph() {
 
   float x_photocathodeOFF[5] = { 2.5, 4.5, 6.5, 8.5, 10.5 };
   float xerr_photocathodeOFF[5] = { 0.25, 0.25, 0.25, 0.25, 0.25 };
-  float y_photocathodeOFF[5] = {  0.13, 0.32, 0.31, 0.24, 0.24 };
+  //float y_photocathodeOFF[5] = {  0.13, 0.32, 0.31, 0.24, 0.24 }; // with low pass filter
+  float y_photocathodeOFF[5] = {  0.14, 0.33, 0.33, 0.26, 0.23 }; // no low pass filter
   float yerr_photocathodeOFF[5] = { 0.01, 0.05, 0.05, 0.03, 0.01 };
 
   float eff_photocathodeOFF[5] = {  99.1, 100, 100, 100, 99.7 };
@@ -324,11 +325,11 @@ void PhotonisONOFFAnalysis() {
   //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_63.root.ana_lowpassfilter.root","PhotonisPhotocathodeON_Electron_6X0Tungsten_8GeV", 1.0, 0.05, 0.4);
   //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_64.root.ana_lowpassfilter.root","PhotonisPhotocathodeON_Electron_8X0Tungsten_8GeV", 1.0, 0.05, 0.4);
 
-  //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_52.root.ana_lowpassfilter.root","PhotonisPhotocathodeOFF_Electron_NoAbsorber_8GeV", 1.0, 0.03, 0.3);
-  //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_51.root.ana_lowpassfilter.root","PhotonisPhotocathodeOFF_Electron_2X0Tungsten_8GeV", 1.0, 0.01, 0.5);
-  MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_53.root.ana_lowpassfilter.root","PhotonisPhotocathodeOFF_Electron_4X0Tungsten_8GeV", 1.0, 0.01, 0.5);
-  //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_54.root.ana_lowpassfilter.root","PhotonisPhotocathodeOFF_Electron_6X0Tungsten_8GeV", 1.0, 0.01, 0.5);
-  //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_56And57.root.ana_lowpassfilter.root","PhotonisPhotocathodeOFF_Electron_8X0Tungsten_8GeV", 1.0, 0.01, 0.5);
+  //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_52.ana.root","PhotonisPhotocathodeOFF_Electron_NoAbsorber_8GeV", 1.0, 0.03, 0.3);
+  //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_51.ana.root","PhotonisPhotocathodeOFF_Electron_2X0Tungsten_8GeV", 1.0, 0.01, 0.5);
+  //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_53.ana.root","PhotonisPhotocathodeOFF_Electron_4X0Tungsten_8GeV", 1.0, 0.01, 0.5);
+  //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_54And55.ana.root","PhotonisPhotocathodeOFF_Electron_6X0Tungsten_8GeV", 1.0, 0.01, 0.5);
+  //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_56And57.ana.root","PhotonisPhotocathodeOFF_Electron_8X0Tungsten_8GeV", 1.0, 0.01, 0.5);
 
 
   //MakeAmplitudeVsShowerDepthGraph();
