@@ -691,17 +691,17 @@ TH1F* InterpolateWaveform(int nsamples, float *outputwaveform, float *inputwavef
       outputwaveform[ii] = inputwaveform[ii];
     }
 
-    // //do low pass filter
-    // const int n_filter = 3;
-    // for( int i = 0+n_filter; i < nsamples-n_filter; i++){
-    //   double temp = 0;
-    //   double count = 0;
-    //   for( int j = i-n_filter; j < i+n_filter; j++){
-    // 	temp += outputwaveform[j];
-    // 	count += 1.0;
-    //   }    
-    //   outputwaveform[i] = temp/count;    
-    // }
+    //do low pass filter
+    const int n_filter = 3;
+    for( int i = 0+n_filter; i < nsamples-n_filter; i++){
+      double temp = 0;
+      double count = 0;
+      for( int j = i-n_filter; j < i+n_filter; j++){
+    	temp += outputwaveform[j];
+    	count += 1.0;
+      }    
+      outputwaveform[i] = temp/count;    
+    }
     
     for (int ii=0;ii<nsamples;ii++) {	
       pulse->SetBinContent(ii+1,outputwaveform[ii]);
