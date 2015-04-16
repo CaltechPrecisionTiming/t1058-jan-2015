@@ -108,8 +108,12 @@ void MakeAmplitudePlot(string filename, string plotname, double scalefactor, dou
   histAmplitude->SetAxisRange(0.0,0.5,"X");
   histAmplitude->SetTitle("");
   histAmplitude->GetXaxis()->SetTitle("Pulse Height [V]");
+  histAmplitude->GetXaxis()->SetTitleSize(0.045);
+  histAmplitude->GetXaxis()->SetLabelSize(0.045);
   histAmplitude->GetYaxis()->SetTitle("Number of Events");
-  histAmplitude->GetYaxis()->SetTitleOffset(1.3);
+  histAmplitude->GetYaxis()->SetTitleOffset(1.05);
+  histAmplitude->GetYaxis()->SetTitleSize(0.045);
+  histAmplitude->GetYaxis()->SetLabelSize(0.045);
   histAmplitude->SetMaximum(1.2*histAmplitude->GetMaximum());
   histAmplitude->Draw();
   histAmplitude->SetStats(0);
@@ -118,48 +122,54 @@ void MakeAmplitudePlot(string filename, string plotname, double scalefactor, dou
   
   TLatex *tex = new TLatex();
   tex->SetNDC();
-  tex->SetTextSize(0.040);
+  tex->SetTextSize(0.050);
   tex->SetTextFont(42);
   tex->SetTextColor(kBlack);
   //tex->DrawLatex(0.55, 0.80, Form("#sigma/#mu = %.1f %s",100*fitter->GetParameter(2)/fitter->GetParameter(1),"%"));
-  tex->DrawLatex(0.55, 0.85, Form("Mean = %.2f #pm %.2f %s",fitter->GetParameter(1),fitter->GetParError(1),"V"));
+  tex->DrawLatex(0.45, 0.85, Form("Mean = %.2f #pm %.2f %s",fitter->GetParameter(1),fitter->GetParError(1),"V"));
   //tex->DrawLatex(0.15, 0.92, Form("Attenuation Factor = %.3f",scalefactor));
   
   c->SaveAs( Form("%s_amplitude.gif", plotname.c_str()) );
   c->SaveAs( Form("%s_amplitude.pdf", plotname.c_str()) );
 
 
-  // //time resolution plot
-  // c = new TCanvas("c","c",600,600);
+  //time resolution plot
+  c = new TCanvas("c","c",600,600);
   
-  // dt->SetAxisRange(2.8,3.6,"X");
-  // dt->SetTitle("");
-  // dt->GetXaxis()->SetTitle("#Delta t [ns]");
-  // dt->GetYaxis()->SetTitle("Number of Events");
-  // dt->GetYaxis()->SetTitleOffset(1.3);
-  // dt->SetMaximum(1.2*dt->GetMaximum());
-  // dt->Draw();
-  // dt->SetStats(0);
-  // dt->Fit("gaus","","",2.5,4);
-  // TVirtualFitter * fitter = TVirtualFitter::GetFitter();
-  
-  // TLatex *tex = new TLatex();
-  // tex->SetNDC();
-  // tex->SetTextSize(0.040);
-  // tex->SetTextFont(42);
-  // tex->SetTextColor(kBlack);
-  // tex->DrawLatex(0.53, 0.80, Form("#sigma = %.0f #pm %.0f ps",1000*fitter->GetParameter(2),1000*fitter->GetParError(2)));
-  // // tex->DrawLatex(0.53, 0.85, Form("Mean = %.2f #pm %.2f ps",fitter->GetParameter(1),fitter->GetParError(1)));
-  // tex->DrawLatex(0.53, 0.85, Form("Mean = %.1f ps",fitter->GetParameter(1)));
- 
-  // c->SaveAs( Form("%s_dt.gif", plotname.c_str()) );
-  // c->SaveAs( Form("%s_dt.pdf", plotname.c_str()) );
+  dt->SetAxisRange(2.8,3.6,"X");
+  dt->SetTitle("");
+  dt->GetXaxis()->SetTitle("#Delta t [ns]");
+  dt->GetYaxis()->SetTitle("Number of Events");
+  dt->GetYaxis()->SetTitleOffset(1.1);
 
-  // double effErrlow = Numerator / Denominator  - TEfficiency::ClopperPearson((UInt_t)Denominator, (UInt_t)Numerator, 0.68269, kFALSE);
-  // double effErrhigh = TEfficiency::ClopperPearson((UInt_t)Denominator, (UInt_t)Numerator, 0.68269, kTRUE) - Numerator / Denominator;
-  // cout << "Photonis Detection Efficiency (Amplitude > 20mV) : " << Numerator / Denominator 
-  //      << " + " << effErrhigh << " - " << effErrlow
-  //      << "\n";
+  dt->GetXaxis()->SetTitleSize(0.045);
+  dt->GetXaxis()->SetLabelSize(0.045);
+  dt->GetYaxis()->SetTitleSize(0.045);
+  dt->GetYaxis()->SetLabelSize(0.040);
+
+  dt->SetMaximum(1.2*dt->GetMaximum());
+  dt->Draw();
+  dt->SetStats(0);
+  dt->Fit("gaus","","",2.5,4);
+  TVirtualFitter * fitter = TVirtualFitter::GetFitter();
+  
+  TLatex *tex = new TLatex();
+  tex->SetNDC();
+  tex->SetTextSize(0.045);
+  tex->SetTextFont(42);
+  tex->SetTextColor(kBlack);
+  tex->DrawLatex(0.53, 0.80, Form("#sigma = %.0f #pm %.0f ps",1000*fitter->GetParameter(2),1000*fitter->GetParError(2)));
+  // tex->DrawLatex(0.53, 0.85, Form("Mean = %.2f #pm %.2f ps",fitter->GetParameter(1),fitter->GetParError(1)));
+  tex->DrawLatex(0.53, 0.85, Form("Mean = %.1f ns",fitter->GetParameter(1)));
+ 
+  c->SaveAs( Form("%s_dt.gif", plotname.c_str()) );
+  c->SaveAs( Form("%s_dt.pdf", plotname.c_str()) );
+
+  double effErrlow = Numerator / Denominator  - TEfficiency::ClopperPearson((UInt_t)Denominator, (UInt_t)Numerator, 0.68269, kFALSE);
+  double effErrhigh = TEfficiency::ClopperPearson((UInt_t)Denominator, (UInt_t)Numerator, 0.68269, kTRUE) - Numerator / Denominator;
+  cout << "Photonis Detection Efficiency (Amplitude > 20mV) : " << Numerator / Denominator 
+       << " + " << effErrhigh << " - " << effErrlow
+       << "\n";
 
   
 }
@@ -253,10 +263,18 @@ void MakeAmplitudeVsShowerDepthGraph() {
 
   EfficiencyGraphOFF->SetTitle("");
   EfficiencyGraphOFF->GetXaxis()->SetTitle("Tungsten Absorber Thickness [X_{0}]");
-  EfficiencyGraphOFF->GetXaxis()->SetTitleOffset(1.2);
+  EfficiencyGraphOFF->GetXaxis()->SetTitleOffset(0.98);
+  EfficiencyGraphOFF->GetXaxis()->SetTitleSize(0.045);
+  EfficiencyGraphOFF->GetXaxis()->SetLabelSize(0.040);
   EfficiencyGraphOFF->GetYaxis()->SetTitle("Detection Efficiency (%)");
-  EfficiencyGraphOFF->GetYaxis()->SetTitleOffset(1.25);
-  EfficiencyGraphOFF->GetYaxis()->SetRangeUser(95,100);
+  EfficiencyGraphOFF->GetYaxis()->SetTitleSize(0.045);
+  EfficiencyGraphOFF->GetYaxis()->SetTitleOffset(1.0);
+  EfficiencyGraphOFF->GetYaxis()->SetRangeUser(95,101);
+
+  TLine *line = new TLine(1.45,100,11.6,100);
+  line->SetLineStyle(2);
+  line->SetLineWidth(2);
+  line->Draw();
 
   c->SaveAs( "EfficiencyVsTungstenThickness_PhotonisPCOFF.gif" );
   c->SaveAs( "EfficiencyVsTungstenThickness_PhotonisPCOFF.pdf" );
@@ -282,27 +300,37 @@ void MakeTimeResolutionVsShowerDepthGraph() {
   TGraphErrors *graphON = new TGraphErrors(5,x_photocathodeON,y_photocathodeON,xerr_photocathodeON,yerr_photocathodeON);
   TGraphErrors *graphOFF = new TGraphErrors(5,x_photocathodeOFF,y_photocathodeOFF,xerr_photocathodeOFF,yerr_photocathodeOFF);
   graphOFF->SetLineWidth(3);
+  graphOFF->SetLineColor(kBlue);
+  graphOFF->SetMarkerStyle(21);
+  graphOFF->SetMarkerSize(1.5);
+  graphOFF->SetMarkerColor(kBlue);
   graphON->SetLineWidth(3);
-  graphON->SetLineColor(kBlue);
+  graphON->SetLineColor(kRed);
+  graphON->SetMarkerStyle(1);
+  graphON->SetMarkerColor(kRed);
+  graphON->SetMarkerSize(1.5);
 
   TCanvas * c = new TCanvas("c","c",800,600);
   graphOFF->Draw("AP");
-  //graphON->Draw("APsame");
+  graphON->Draw("Psame");
 
-  TLegend *legend = new TLegend (0.50,0.7,0.8,0.85);
-  legend->SetTextSize(0.04);
+  TLegend *legend = new TLegend (0.40,0.65,0.8,0.85);
+  legend->SetTextSize(0.05);
   legend->SetFillStyle(0);
   legend->SetBorderSize(0);
   legend->AddEntry(graphOFF, "Photocathode OFF","LP");
-  //legend->AddEntry(graphON, "Photocathode ON","LP");
+  legend->AddEntry(graphON, "Photocathode ON","LP");
   legend->Draw();
 
-  graphOFF->SetTitle("");
   graphOFF->GetXaxis()->SetTitle("Tungsten Absorber Thickness [X_{0}]");
-  graphOFF->GetXaxis()->SetTitleOffset(1.2);
+  graphOFF->GetXaxis()->SetTitleOffset(0.98);
+  graphOFF->GetXaxis()->SetTitleSize(0.045);
+  graphOFF->GetXaxis()->SetLabelSize(0.040);
   graphOFF->GetYaxis()->SetTitle("Time Resolution [ps]");
-  graphOFF->GetYaxis()->SetTitleOffset(1.25);
+  graphOFF->GetYaxis()->SetTitleSize(0.05);
+  graphOFF->GetYaxis()->SetTitleOffset(0.9);
   graphOFF->GetYaxis()->SetRangeUser(0,120);
+  graphOFF->SetTitle("");
 
   c->SaveAs( "PhotonisTimeResolutionVsAbsorberThickness.gif" );
   c->SaveAs( "PhotonisTimeResolutionVsAbsorberThickness.pdf" );
@@ -327,25 +355,12 @@ void PhotonisONOFFAnalysis() {
 
   //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_52.ana.root","PhotonisPhotocathodeOFF_Electron_NoAbsorber_8GeV", 1.0, 0.03, 0.3);
   //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_51.ana.root","PhotonisPhotocathodeOFF_Electron_2X0Tungsten_8GeV", 1.0, 0.01, 0.5);
-  //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_53.ana.root","PhotonisPhotocathodeOFF_Electron_4X0Tungsten_8GeV", 1.0, 0.01, 0.5);
+  MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_53.root.ana_lowpassfilter.root","PhotonisPhotocathodeOFF_Electron_4X0Tungsten_8GeV", 1.0, 0.01, 0.5);
   //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_54And55.ana.root","PhotonisPhotocathodeOFF_Electron_6X0Tungsten_8GeV", 1.0, 0.01, 0.5);
   //MakeAmplitudePlot("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_56And57.ana.root","PhotonisPhotocathodeOFF_Electron_8X0Tungsten_8GeV", 1.0, 0.01, 0.5);
 
 
   //MakeAmplitudeVsShowerDepthGraph();
-  //MakeTimeResolutionVsShowerDepthGraph();
-
-
-  //
-  //*************************************
-  //Results for Y11 Fibers from May Testbeam
-  //*************************************
-//   MakeTimeResolutionPlot("cpt_may_run_131.ana.root","TOF_ShashlikY11Fiber_Electron_4GeV",4,false);
-//   MakeTimeResolutionPlot("cpt_may_run_132.ana.root","TOF_ShashlikY11Fiber_Electron_8GeV",8,false);
-//   MakeTimeResolutionPlot("cpt_may_run_133.ana.root","TOF_ShashlikY11Fiber_Electron_16GeV",16,false);
-//   MakeTimeResolutionVsEnergyPlot_Y11();
-
-
-
+  // MakeTimeResolutionVsShowerDepthGraph();
 
 }
