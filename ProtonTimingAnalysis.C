@@ -110,8 +110,14 @@ void MakePlotAlternativeFormat(string filename, string plotname, double scalefac
   dt->SetAxisRange(0.1,0.4,"X");
   dt->SetTitle("");
   dt->GetXaxis()->SetTitle("#Delta t [ns]");
+  dt->GetXaxis()->SetTitleSize(0.045);
+  dt->GetXaxis()->SetLabelSize(0.040);
+  dt->GetXaxis()->SetLabelOffset(0.012);
+  dt->GetXaxis()->SetTitleOffset(1.0);
   dt->GetYaxis()->SetTitle("Number of Events");
-  dt->GetYaxis()->SetTitleOffset(1.3);
+  dt->GetYaxis()->SetTitleOffset(1.04);
+  dt->GetYaxis()->SetTitleSize(0.045);
+  dt->GetYaxis()->SetLabelSize(0.040);
   dt->SetMaximum(1.2*dt->GetMaximum());
   dt->Draw();
   dt->SetStats(0);
@@ -120,12 +126,12 @@ void MakePlotAlternativeFormat(string filename, string plotname, double scalefac
   
   TLatex *tex = new TLatex();
   tex->SetNDC();
-  tex->SetTextSize(0.040);
+  tex->SetTextSize(0.050);
   tex->SetTextFont(42);
   tex->SetTextColor(kBlack);
-  tex->DrawLatex(0.55, 0.80, Form("#sigma = %.1f #pm %.1f ps",1000*fitter->GetParameter(2),1000*fitter->GetParError(2)));
+  tex->DrawLatex(0.55, 0.80, Form("#sigma = %.1f #pm %.1f ns",1000*fitter->GetParameter(2),1000*fitter->GetParError(2)));
   //tex->DrawLatex(0.55, 0.85, Form("Mean = %.2f #pm %.2f %s",fitter->GetParameter(1),fitter->GetParError(1),"V"));
-  tex->DrawLatex(0.55, 0.85, Form("Mean = %.1f ps",fitter->GetParameter(1)));
+  tex->DrawLatex(0.55, 0.85, Form("Mean = %.2f ns",fitter->GetParameter(1)));
   
   c->SaveAs( Form("%s_dt.gif", plotname.c_str()) );
   c->SaveAs( Form("%s_dt.pdf", plotname.c_str()) );
