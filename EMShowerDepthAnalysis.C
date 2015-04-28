@@ -119,31 +119,31 @@ void MakeAmplitudePlot(string filename, string plotname, double scalefactor, dou
   c->SaveAs( Form("%s_amplitude.pdf", plotname.c_str()) );
 
 
-  // //time resolution plot
-  // c = new TCanvas("c","c",600,600);
+  //time resolution plot
+  c = new TCanvas("c","c",600,600);
   
-  // dt->SetAxisRange(0.1,0.6,"X");
-  // dt->SetTitle("");
-  // dt->GetXaxis()->SetTitle("#Delta t [ns]");
-  // dt->GetYaxis()->SetTitle("Number of Events");
-  // dt->GetYaxis()->SetTitleOffset(1.3);
-  // dt->SetMaximum(1.2*dt->GetMaximum());
-  // dt->Draw();
-  // dt->SetStats(0);
-  // dt->Fit("gaus","","",0.15,0.45);
-  // TVirtualFitter * fitter = TVirtualFitter::GetFitter();
+  dt->SetAxisRange(0.1,0.6,"X");
+  dt->SetTitle("");
+  dt->GetXaxis()->SetTitle("#Delta t [ns]");
+  dt->GetYaxis()->SetTitle("Number of Events");
+  dt->GetYaxis()->SetTitleOffset(1.3);
+  dt->SetMaximum(1.2*dt->GetMaximum());
+  dt->Draw();
+  dt->SetStats(0);
+  dt->Fit("gaus","","",0.15,0.45);
+  TVirtualFitter * fitter = TVirtualFitter::GetFitter();
   
-  // TLatex *tex = new TLatex();
-  // tex->SetNDC();
-  // tex->SetTextSize(0.040);
-  // tex->SetTextFont(42);
-  // tex->SetTextColor(kBlack);
-  // tex->DrawLatex(0.55, 0.80, Form("#sigma = %.1f #pm %.1f ps",1000*fitter->GetParameter(2),1000*fitter->GetParError(2)));
-  // //tex->DrawLatex(0.55, 0.85, Form("Mean = %.2f #pm %.2f %s",fitter->GetParameter(1),fitter->GetParError(1),"V"));
-  // tex->DrawLatex(0.55, 0.85, Form("Mean = %.1f ps",fitter->GetParameter(1)));
+  TLatex *tex = new TLatex();
+  tex->SetNDC();
+  tex->SetTextSize(0.040);
+  tex->SetTextFont(42);
+  tex->SetTextColor(kBlack);
+  tex->DrawLatex(0.55, 0.80, Form("#sigma = %.1f #pm %.1f ps",1000*fitter->GetParameter(2),1000*fitter->GetParError(2)));
+  //tex->DrawLatex(0.55, 0.85, Form("Mean = %.2f #pm %.2f %s",fitter->GetParameter(1),fitter->GetParError(1),"V"));
+  tex->DrawLatex(0.55, 0.85, Form("Mean = %.1f ps",fitter->GetParameter(1)));
   
-  // c->SaveAs( Form("%s_dt.gif", plotname.c_str()) );
-  // c->SaveAs( Form("%s_dt.pdf", plotname.c_str()) );
+  c->SaveAs( Form("%s_dt.gif", plotname.c_str()) );
+  c->SaveAs( Form("%s_dt.pdf", plotname.c_str()) );
 
 
   
@@ -236,8 +236,13 @@ void MakePlotAlternativeFormat(string filename, string plotname, double scalefac
   dt->SetAxisRange(0.1,0.4,"X");
   dt->SetTitle("");
   dt->GetXaxis()->SetTitle("#Delta t [ns]");
+  dt->GetXaxis()->SetTitleSize(0.045);
+  dt->GetXaxis()->SetLabelSize(0.040);
+  dt->GetXaxis()->SetTitleOffset(1.0);
   dt->GetYaxis()->SetTitle("Number of Events");
-  dt->GetYaxis()->SetTitleOffset(1.3);
+  dt->GetYaxis()->SetTitleOffset(1.02);
+  dt->GetYaxis()->SetTitleSize(0.045);
+  dt->GetYaxis()->SetLabelSize(0.040);
   dt->SetMaximum(1.2*dt->GetMaximum());
   dt->Draw();
   dt->SetStats(0);
@@ -246,12 +251,12 @@ void MakePlotAlternativeFormat(string filename, string plotname, double scalefac
   
   TLatex *tex = new TLatex();
   tex->SetNDC();
-  tex->SetTextSize(0.040);
+  tex->SetTextSize(0.050);
   tex->SetTextFont(42);
   tex->SetTextColor(kBlack);
-  tex->DrawLatex(0.55, 0.80, Form("#sigma = %.1f #pm %.1f ps",1000*fitter->GetParameter(2),1000*fitter->GetParError(2)));
+  tex->DrawLatex(0.50, 0.80, Form("#sigma = %.1f #pm %.1f ps",1000*fitter->GetParameter(2),1000*fitter->GetParError(2)));
   //tex->DrawLatex(0.55, 0.85, Form("Mean = %.2f #pm %.2f %s",fitter->GetParameter(1),fitter->GetParError(1),"V"));
-  tex->DrawLatex(0.55, 0.85, Form("Mean = %.1f ps",fitter->GetParameter(1)));
+  tex->DrawLatex(0.50, 0.85, Form("Mean = %.1f ps",fitter->GetParameter(1)));
   
   c->SaveAs( Form("%s_dt.gif", plotname.c_str()) );
   c->SaveAs( Form("%s_dt.pdf", plotname.c_str()) );
@@ -325,8 +330,8 @@ void MakeAmplitudeVsShowerDepthGraph() {
   graphLead->Draw("AP");
   graphTungsten->Draw("Psame");
 
-  TLegend *legend = new TLegend (0.65,0.7,0.8,0.85);
-  legend->SetTextSize(0.03);
+  TLegend *legend = new TLegend (0.50,0.7,0.8,0.85);
+  legend->SetTextSize(0.05);
   legend->SetFillStyle(0);
   legend->SetBorderSize(0);
   legend->AddEntry(graphLead, "Lead Absorber","LP");
@@ -335,9 +340,13 @@ void MakeAmplitudeVsShowerDepthGraph() {
 
   graphLead->SetTitle("");
   graphLead->GetXaxis()->SetTitle("Absorber Thickness [X_{0}]");
-  graphLead->GetXaxis()->SetTitleOffset(1.2);
+  graphLead->GetXaxis()->SetTitleSize(0.045);
+  graphLead->GetXaxis()->SetLabelSize(0.045);
+  graphLead->GetXaxis()->SetTitleOffset(1.0);
   graphLead->GetYaxis()->SetTitle("Mean Amplitude [V]");
-  graphLead->GetYaxis()->SetTitleOffset(1.25);
+  graphLead->GetYaxis()->SetTitleOffset(1.02);
+  graphLead->GetYaxis()->SetTitleSize(0.045);
+  graphLead->GetYaxis()->SetLabelSize(0.045);
   graphLead->GetYaxis()->SetRangeUser(0,0.6);
 
   c->SaveAs( "AmplitudeVsLeadThickness.gif" );
@@ -427,8 +436,8 @@ void MakeTimeResolutionVsShowerDepthGraph() {
   graphLead->Draw("AP");
   graphTungsten->Draw("Psame");
 
-  TLegend *legend = new TLegend (0.50,0.7,0.8,0.85);
-  legend->SetTextSize(0.03);
+  TLegend *legend = new TLegend (0.30,0.7,0.8,0.85);
+  legend->SetTextSize(0.05);
   legend->SetFillStyle(0);
   legend->SetBorderSize(0);
   legend->AddEntry(graphLead, "Lead Absorber","LP");
@@ -437,9 +446,13 @@ void MakeTimeResolutionVsShowerDepthGraph() {
 
   graphLead->SetTitle("");
   graphLead->GetXaxis()->SetTitle("Absorber Thickness [X_{0}]");
-  graphLead->GetXaxis()->SetTitleOffset(1.2);
+  graphLead->GetXaxis()->SetTitleSize(0.045);
+  graphLead->GetXaxis()->SetLabelSize(0.045);
+  graphLead->GetXaxis()->SetTitleOffset(1.0);
   graphLead->GetYaxis()->SetTitle("Time Resolution [ps]");
-  graphLead->GetYaxis()->SetTitleOffset(1.25);
+  graphLead->GetYaxis()->SetTitleOffset(1.02);
+  graphLead->GetYaxis()->SetTitleSize(0.045);
+  graphLead->GetYaxis()->SetLabelSize(0.045);
   graphLead->GetYaxis()->SetRangeUser(5,20);
 
   c->SaveAs( "TimeResolutionVsLeadThickness.gif" );
@@ -479,14 +492,14 @@ void EMShowerDepthAnalysis() {
   //*************************************
   // Make plot from heejong analysis ntuple
   //*************************************
-  //MakePlotAlternativeFormat("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_8.ana_heejongCode.root","Amplitude_Electron_NoAbsorber_8GeV", 1.0, 0.1, 0.3);
+  MakePlotAlternativeFormat("/uscms_data/d2/sxie/releases/CMSSW_7_2_3/src/Timing/t1058-jan-2015/t1058_jan2015_run_8.ana_heejongCode.root","Amplitude_Electron_NoAbsorber_8GeV", 1.0, 0.1, 0.3);
 
 
 
   //*************************************
   // Final Graphs
   //*************************************
-  MakeAmplitudeVsShowerDepthGraph();
+  //MakeAmplitudeVsShowerDepthGraph();
   //MakeTimeResolutionVsShowerDepthGraph();
 
 

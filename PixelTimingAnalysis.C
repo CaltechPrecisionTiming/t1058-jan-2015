@@ -297,6 +297,9 @@ void PlotTimeResolutionVsPixel() {
   TimeResolutionVsPixelGraphRun31->GetYaxis()->SetBinLabel(3,"Pixel 54");
   TimeResolutionVsPixelGraphRun31->GetYaxis()->SetBinLabel(2,"Pixel 43");
   TimeResolutionVsPixelGraphRun31->GetYaxis()->SetBinLabel(1,"Pixel 53");
+
+
+ 
   TimeResolutionVsPixelGraphRun31->SetStats(0);
   TimeResolutionVsPixelGraphRun31->GetYaxis()->SetTitleOffset(2.0);
 
@@ -320,10 +323,19 @@ void PlotTimeResolutionVsPixel() {
   c->SetLeftMargin(0.15);
 
   TimeResolutionVsPixelGraphRun31->Draw("colztexte");
+  TimeResolutionVsPixelGraphRun31->GetYaxis()->SetTitleOffset(1.70);
+  TimeResolutionVsPixelGraphRun31->GetYaxis()->SetTitleSize(0.045);
+  TimeResolutionVsPixelGraphRun31->GetYaxis()->SetLabelSize(0.060);
+  TimeResolutionVsPixelGraphRun31->GetXaxis()->SetTitleOffset(1.02);
+  TimeResolutionVsPixelGraphRun31->GetXaxis()->SetTitleSize(0.045);
+  TimeResolutionVsPixelGraphRun31->GetXaxis()->SetLabelSize(0.060);
+  TimeResolutionVsPixelGraphRun31->GetZaxis()->SetLabelSize(0.050);
+
 
   c->SaveAs( "TimeResolutionVsPixelGraph_Run31.gif");
   c->SaveAs( "TimeResolutionVsPixelGraph_Run31.pdf");
 
+  return;
 
   //*************************************************************
   //Run 32,33 Beam at center of pixel 54 , 4X0 tungsten
@@ -366,6 +378,7 @@ void PlotTimeResolutionVsPixel() {
 
   c->SaveAs( "TimeResolutionVsPixelGraph_Run32And33.gif");
   c->SaveAs( "TimeResolutionVsPixelGraph_Run32And33.pdf");
+
 
   //*************************************************************
   //Run 34 Beam at center of pixel 54 , 2X0 tungsten
@@ -430,7 +443,7 @@ void PlotAmplitudeVsPixel() {
   AmplitudeVsPixelGraphRun31->GetYaxis()->SetTitleOffset(1.0);
   AmplitudeVsPixelGraphRun31->GetXaxis()->SetTitle("X Axis");
   AmplitudeVsPixelGraphRun31->GetZaxis()->SetTitleOffset(1.25);
-  AmplitudeVsPixelGraphRun31->GetZaxis()->SetTitle("Amplitude [mV}");
+  AmplitudeVsPixelGraphRun31->GetZaxis()->SetTitle("Amplitude [mV]");
 
   AmplitudeVsPixelGraphRun31->SetBinContent(1,1,101); AmplitudeVsPixelGraphRun31->SetBinError(1,1,10);
   AmplitudeVsPixelGraphRun31->SetBinContent(1,2,78); AmplitudeVsPixelGraphRun31->SetBinError(1,2,10);
@@ -449,6 +462,15 @@ void PlotAmplitudeVsPixel() {
   // TGaxis *xaxis = new TGaxis(-4.5,-0.2,5.5,-0.2,-6,6,100,"");
 
   AmplitudeVsPixelGraphRun31->Draw("colztextee");
+  AmplitudeVsPixelGraphRun31->GetYaxis()->SetTitleOffset(0.6);
+  AmplitudeVsPixelGraphRun31->GetYaxis()->SetTitleSize(0.055);
+  AmplitudeVsPixelGraphRun31->GetYaxis()->SetLabelSize(0.060);
+  AmplitudeVsPixelGraphRun31->GetXaxis()->SetTitleOffset(0.6);
+  AmplitudeVsPixelGraphRun31->GetXaxis()->SetTitleSize(0.055);
+  AmplitudeVsPixelGraphRun31->GetXaxis()->SetLabelSize(0.060);
+  AmplitudeVsPixelGraphRun31->GetZaxis()->SetLabelSize(0.045);
+  AmplitudeVsPixelGraphRun31->GetZaxis()->SetTitleSize(0.045);
+  AmplitudeVsPixelGraphRun31->GetZaxis()->SetTitleOffset(1.05);
 
   TLatex *tex = new TLatex();
   tex->SetNDC();
@@ -466,6 +488,7 @@ void PlotAmplitudeVsPixel() {
   c->SaveAs( "AmplitudeVsPixelGraph_Run31.gif");
   c->SaveAs( "AmplitudeVsPixelGraph_Run31.pdf");
 
+  return;
 
   //*************************************************************
   //Run 32,33 Beam at center of pixel 54 , 4X0 tungsten
