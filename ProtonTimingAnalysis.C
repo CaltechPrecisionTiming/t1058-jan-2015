@@ -129,7 +129,7 @@ void MakePlotAlternativeFormat(string filename, string plotname, double scalefac
   tex->SetTextSize(0.050);
   tex->SetTextFont(42);
   tex->SetTextColor(kBlack);
-  tex->DrawLatex(0.55, 0.80, Form("#sigma = %.1f #pm %.1f ns",1000*fitter->GetParameter(2),1000*fitter->GetParError(2)));
+  tex->DrawLatex(0.55, 0.80, Form("#sigma = %.1f #pm %.1f ps",1000*fitter->GetParameter(2),1000*fitter->GetParError(2)));
   //tex->DrawLatex(0.55, 0.85, Form("Mean = %.2f #pm %.2f %s",fitter->GetParameter(1),fitter->GetParError(1),"V"));
   tex->DrawLatex(0.55, 0.85, Form("Mean = %.2f ns",fitter->GetParameter(1)));
   
