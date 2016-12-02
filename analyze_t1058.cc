@@ -402,6 +402,7 @@ int main (int argc, char **argv)
       int index_min7 = FindMin (Nsamples, splineBinFactor, Channel7Voltages_);	// return index of the min
       int index_min8 = FindMin (Nsamples, splineBinFactor, Channel8Voltages_);	// return index of the min
 
+      
       assert(CH1pulse);
       assert(CH2pulse);
       assert(CH3pulse);
@@ -484,7 +485,8 @@ int main (int argc, char **argv)
       float base6 = LinearFit_Baseline( CH6pulse, index_min6, 10 );
       float base7 = LinearFit_Baseline( CH7pulse, index_min7, 10 );
       float base8 = LinearFit_Baseline( CH8pulse, index_min8, 10 );
-      base1 = 0;
+
+      /*base1 = 0;
       base2 = 0;
       base3 = 0;
       base4 = 0;
@@ -492,7 +494,7 @@ int main (int argc, char **argv)
       base6 = 0;
       base7 = 0;
       base8 = 0;
-
+      */
       //std::cout << "baseline: " << base1 << " " << base2 << "\n";
 
       /////////////////////////
@@ -578,10 +580,10 @@ int main (int argc, char **argv)
       
       //Fit Rising Edge
       //FitRisingEdge(CH1pulse, -1, 0, ch1THM, ch1Risetime, base1);
-      //FitRisingEdge(CH2pulse, -1, 0, ch2THM, ch2Risetime, base2);
+      FitRisingEdge(CH2pulse, -1, 0, ch2THM, ch2Risetime, base2);
       //      FitRisingEdge(CH3pulse, -1, 0, ch3THM, ch3Risetime, 415, 435);
-      //FitRisingEdge(CH4pulse, -1, 0, ch4THM, ch4Risetime, 415, 435);
-      
+      FitRisingEdge(CH4pulse, -1, 0, ch4THM, ch4Risetime, base4);
+            
       if(ch1Amp < 0.05 || ch2Amp < 0.05){
         //continue;
       }
@@ -590,7 +592,7 @@ int main (int argc, char **argv)
 //   	break;
 //       }
 
-      
+      //if ( iEntry >= 2 ) break;
       //Fill the tree
       treeOut->Fill();
 
@@ -973,9 +975,12 @@ float ChannelIntegral(float *a, int peak)
 void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &risetime, float base ){
 
   TF1 *fTopline = new TF1("fTopline","pol0",600, 800);
-  pulse->Fit("fTopline","Q","", 600, 800);
+  float x_min = pulse->GetBinCenter( pulse->GetMaximumBin()-1 );
+  float x_max = pulse->GetBinCenter( pulse->GetMaximumBin()+1 );
+  //std::cout << " min: " << x_min << " max: " << x_max << std::endl;
+  pulse->Fit("fTopline","Q","", x_min, x_max);
   float top = fTopline->GetParameter(0);
-  //std::cout << "top : " << top << "\n";
+  //std::cout << "top : " << top << " base: " << base << "\n";
 
   double max=-9999;
   for (int i=10;i<pulse->GetXaxis()->GetNbins();i++) {    
@@ -989,7 +994,7 @@ void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &riset
   int bM=0;  
   for (int i=10;i<pulse->GetXaxis()->GetNbins();i++) {
     //std::cout << "bin: "<< i << " " << pulse->GetBinContent(i) << "\n";
-    if (pulse->GetBinContent(i) > base + 0.75*(top-base)) {
+    if (pulse->GetBinContent(i) > base + 0.8*(top-base)) {
       bM = i;
       break;
     }
@@ -1008,7 +1013,8 @@ void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &riset
   //std::cout << bM << " : " << bL << "\n";
   //bM = 415;
   //bL = 435;
-  TF1* f = new TF1("f", "[0]+x*[1]", pulse->GetBinCenter(bL+nbinsL), pulse->GetBinCenter(bM+nbinsH));
+  //TF1* f = new TF1("f", "[0]+x*[1]", pulse->GetBinCenter(bL+nbinsL), pulse->GetBinCenter(bM+nbinsH));
+  TF1* f = new TF1("f", "[0]+x*[1]", pulse->GetBinCenter(bL+nbinsL), pulse->GetBinCenter(bL + 3 + nbinsL ));
   //pulse->Fit(f,"MWLR");
   pulse->Fit(f,"RQ");
   float m = f->GetParameter(1);
@@ -1016,7 +1022,9 @@ void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &riset
   delete f;
   //std::cout << "HTM: " << 0.2*(0.2*pulse->GetMaximum()-b)/m << std::endl;
   THM = 0.2*(base+0.5*(top-base)-b)/m;//converted to picoseconds
-  risetime = 0.2*(base+0.75*(top-base)-b)/m - 0.2*(base+0.25*(top-base)-b)/m;  
+  //risetime = 0.2*(base+0.75*(top-base)-b)/m - 0.2*(base+0.25*(top-base)-b)/m;
+  risetime = 0.2*(0.75*top-0.25*top)/m;
+  
 }
 
 //For SiPMs on scintillator
