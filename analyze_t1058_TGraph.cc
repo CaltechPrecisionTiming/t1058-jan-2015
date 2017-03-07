@@ -27,7 +27,7 @@ enum PulseQuality {
 
 bool doFilter = false;
 
-int FindMinAbsolute( int n, float *a, bool invert = false );
+int FindMaxAbsolute( int n, float *a, bool _findMin = false );
 TGraphErrors* GetTGraphFilter( float* channel, float* time, TString pulseName, bool makePlot );
 float GetPulseIntegral(int peak, float *a, std::string option);
 float GetBaseline(TGraphErrors * pulse, int i_low, int i_high, TString fname );
@@ -281,23 +281,16 @@ int main (int argc, char **argv)
       t1->GetEntry(iEntry);
       eventNumber = iEntry+1;
 
-      //Find the absolute minimum. This is only used as a rough determination to decide if we'll use the early time samples
-      //or the late time samples to do the baseline fit
-      int index_min1 = FindMinAbsolute(1024, Channel1VoltagesRaw_, false); // return index of the minc
-      int index_min2 = FindMinAbsolute(1024, Channel2VoltagesRaw_, true); // return index of the minc
-      int index_min3 = FindMinAbsolute(1024, Channel3VoltagesRaw_, false); // return index of the minc
-      int index_min4 = FindMinAbsolute(1024, Channel4VoltagesRaw_, false); // return index of the minc
-
       //Make Pulse shape Graph
       TString pulseName1 = Form("pulse_event%d_ch1", iEntry);
       TString pulseName2 = Form("pulse_event%d_ch2", iEntry);
       TString pulseName3 = Form("pulse_event%d_ch3", iEntry);
       TString pulseName4 = Form("pulse_event%d_ch4", iEntry);
       
-      TGraphErrors* pulse1 = new TGraphErrors( GetTGraph( Channel1VoltagesRaw_, ti1_, true ) );
-      TGraphErrors* pulse2 = new TGraphErrors( GetTGraph( Channel2VoltagesRaw_, ti2_, false ) );
-      TGraphErrors* pulse3 = new TGraphErrors( GetTGraph( Channel3VoltagesRaw_, ti3_, true ) );
-      TGraphErrors* pulse4 = new TGraphErrors( GetTGraph( Channel4VoltagesRaw_, ti4_, true ) );
+      TGraphErrors* pulse1 = new TGraphErrors( GetTGraph( Channel1VoltagesRaw_, ti1_) );
+      TGraphErrors* pulse2 = new TGraphErrors( GetTGraph( Channel2VoltagesRaw_, ti2_) );
+      TGraphErrors* pulse3 = new TGraphErrors( GetTGraph( Channel3VoltagesRaw_, ti3_) );
+      TGraphErrors* pulse4 = new TGraphErrors( GetTGraph( Channel4VoltagesRaw_, ti4_) );
 
       //estimate baseline
       float baseline1;
@@ -306,7 +299,7 @@ int main (int argc, char **argv)
       float baseline4;
       
       baseline1 = GetBaseline( pulse1, 5 ,50, pulseName1);
-      baseline2 = GetBaseline( pulse2, 5 ,200, pulseName2);
+      baseline2 = GetBaseline( pulse2, 5 ,50, pulseName2);
       baseline3 = GetBaseline( pulse3, 5 ,50, pulseName3);
       baseline4 = GetBaseline( pulse4, 5 ,50, pulseName4);
 
@@ -316,10 +309,10 @@ int main (int argc, char **argv)
       // Correct pulse shape for baseline offset
       for(int j = 0; j < 1024; j++)
       	{
-      	  Channel1VoltagesRaw_[j] = Channel1VoltagesRaw_[j] + baseline1;
-      	  Channel2VoltagesRaw_[j] = Channel2VoltagesRaw_[j] + baseline2;
-	  Channel3VoltagesRaw_[j] = Channel3VoltagesRaw_[j] + baseline3;
-      	  Channel4VoltagesRaw_[j] = Channel4VoltagesRaw_[j] + baseline4;
+      	  Channel1VoltagesRaw_[j] = Channel1VoltagesRaw_[j] - baseline1;
+      	  Channel2VoltagesRaw_[j] = Channel2VoltagesRaw_[j] - baseline2;
+	  Channel3VoltagesRaw_[j] = Channel3VoltagesRaw_[j] - baseline3;
+      	  Channel4VoltagesRaw_[j] = Channel4VoltagesRaw_[j] - baseline4;
       	}
       
       delete pulse1;
@@ -327,11 +320,16 @@ int main (int argc, char **argv)
       delete pulse3;
       delete pulse4;
 
-      //---------------------------------
-      //Create baseline corrected TGraphs
-      //---------------------------------
+      //----------------------------------------
+      //
+      //----------------------------------------
+
+      
+      //----------------------------------------------------------------------------------------
+      //Create baseline corrected TGraphs (make sure you invert your pulse if they are negative)
+      //----------------------------------------------------------------------------------------
       pulse1 = new TGraphErrors( GetTGraph( Channel1VoltagesRaw_, ti1_, false ) );
-      pulse2 = new TGraphErrors( GetTGraph( Channel2VoltagesRaw_, ti2_, true ) );
+      pulse2 = new TGraphErrors( GetTGraph( Channel2VoltagesRaw_, ti2_, false ) );
       pulse3 = new TGraphErrors( GetTGraph( Channel3VoltagesRaw_, ti3_, false ) );
       pulse4 = new TGraphErrors( GetTGraph( Channel4VoltagesRaw_, ti4_, false ) );
       
@@ -339,7 +337,18 @@ int main (int argc, char **argv)
       // 	pulse1 = GetTGraphFilter( Channel1VoltagesRaw_, ti1_, pulseName1 , false);
       // 	pulse2 = GetTGraphFilter( Channel2VoltagesRaw_, ti2_, pulseName2 , false);
       // }
-      
+
+      //------------------------------------------------------------------
+      //Getting index to maximum or minimum dependending on signal polarity
+      //------------------------------------------------------------------
+      //Find the absolute maximum. This is only used as a rough determination to decide if we'll use the early time samples
+      //or the late time samples to do the baseline fit
+      //NOTE: if your pulse is negative set _findMin (last input in the FindMaxAbsolute function) flag to <true>
+      int index_min1 = FindMaxAbsolute(1024, Channel1VoltagesRaw_, false); // return index of the max
+      int index_min2 = FindMaxAbsolute(1024, Channel2VoltagesRaw_, false); // return index of the max
+      int index_min3 = FindMaxAbsolute(1024, Channel3VoltagesRaw_, false); // return index of the max
+      int index_min4 = FindMaxAbsolute(1024, Channel4VoltagesRaw_, false); // return index of the max
+
       //Compute Amplitude : use units V
       Double_t tmpAmp = 0.0;
       Double_t tmpMin = 0.0;
@@ -396,13 +405,13 @@ int main (int argc, char **argv)
       //-------------------
       //for debugging the fits visually
       //--------------------
-      /*
+      
       TCanvas* c = new TCanvas("c","c",600,600);
-      pulse3->GetXaxis()->SetRange(500,780);
-      pulse3->SetMarkerStyle(20);
-      pulse3->Draw("AP");
+      pulse2->GetXaxis()->SetRange(0,1024);
+      pulse2->SetMarkerStyle(20);
+      pulse2->Draw("AP");
       c->SaveAs("pulse1.pdf");
-      */
+      
       
       delete pulse1;
       delete pulse2;
@@ -435,11 +444,11 @@ TGraphErrors GetTGraph(  float* channel, float* time, bool invert )
   return tg;
 };
 
-int FindMinAbsolute( int n, float *a, bool invert ) {
+int FindMaxAbsolute( int n, float *a, bool _findMin ) {
   
   if (n <= 0 || !a) return -1;
   int loc = 0;
-  if ( invert )
+  if ( _findMin )
     {
       float xmin = a[5];
       for  (int i = 5; i < n-10; i++) {
