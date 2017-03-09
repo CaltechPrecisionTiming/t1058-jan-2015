@@ -496,27 +496,19 @@ int main (int argc, char **argv) {
       float base6 = LinearFit_Baseline( CH6pulse, index_min6, 10 );
       float base7 = LinearFit_Baseline( CH7pulse, index_min7, 10 );
       float base8 = LinearFit_Baseline( CH8pulse, index_min8, 10 );
-<<<<<<< HEAD
-
+      
       /*base1 = 0;
       base2 = 0;
-=======
-    /*  base1 = 0;
+      /*  base1 = 0;
       base2 = 0;        
->>>>>>> 7ace26a8e87e9b7269fa37c6080a6f279fa5cdfe
       base3 = 0;
       base4 = 0;
       base5 = 0;
       base6 = 0;
       base7 = 0;
-<<<<<<< HEAD
       base8 = 0;
       */
-=======
-      base8 = 0; */
-
->>>>>>> 7ace26a8e87e9b7269fa37c6080a6f279fa5cdfe
-      //std::cout << "baseline: " << base1 << " " << base2 << "\n";
+      	//std::cout << "baseline: " << base1 << " " << base2 << "\n";
 
       /////////////////////////
       // Find the amplitudes
