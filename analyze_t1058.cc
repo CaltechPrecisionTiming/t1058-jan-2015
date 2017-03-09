@@ -11,6 +11,7 @@
 #include "Math/Interpolator.h"
 #include <assert.h>
 
+
 #define binsize 1
 
 enum PulseQuality {
@@ -35,14 +36,14 @@ float LED( TH1F * pulse, double threshold, int nsamples, int splineBinFactor );
 float LinearFit_Baseline(TH1F * pulse, const int index_min, const int range);
 float LinearFit_Intercept(TH1F * pulse, const float base, const int index_first, const int index_last);
 float GausFit_MeanTime(TH1F * pulse, const int index_first, const int index_last);
-void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &risetime, float base);
+void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &risetime, float base, bool setbins);
 void FitFullPulse(TH1F* pulse, float &par0, float &par1, float &par2);
 TH1F* InterpolateWaveform(int nsamples, float* outputwaveform, float *inputwaveform, int splineBinFactor, std::string name);
 
 const int Nsamples = 1024;
 
-int main (int argc, char **argv)
-{
+int main (int argc, char **argv) {
+
   TFile *f;
 
   if (argc >= 3)
@@ -64,12 +65,18 @@ int main (int argc, char **argv)
 
 
   bool includePulseshapeInOutput = false;
-  if (argc >= 4) includePulseshapeInOutput = bool(atoi(argv[3]));
+  if (argc >= 4) 
+      includePulseshapeInOutput = bool(atoi(argv[3]));
   
   //const int splineBinFactor = 40;
   const int splineBinFactor = 1;
 
-  int t_[Nsamples]; for (int i = 0; i < 1024; i++) { t_[i] = i; }
+  int t_[Nsamples]; 
+
+  for (int i = 0; i < Nsamples; i++) {
+      t_[i] = i;
+  }
+
   float Channel1VoltagesRaw_[Nsamples];
   float Channel2VoltagesRaw_[Nsamples];
   float Channel3VoltagesRaw_[Nsamples];
@@ -141,6 +148,7 @@ int main (int argc, char **argv)
 
   // Create the output file with a TTree
   TFile* fout;
+
   if(strncmp(argv[2], "same", 100) == 0){
     std::string fn(argv[1]);
     int pf = fn.find(".root");
@@ -149,7 +157,7 @@ int main (int argc, char **argv)
     std::cout << "fname: " << fn << std::endl;
     //return 0;
     fout = new TFile(fn.c_str(),"recreate");
-  }else{
+  } else{
     fout = new TFile(argv[2],"recreate");
   }
   TTree* treeOut = new TTree("tree","tree");
@@ -327,13 +335,15 @@ int main (int argc, char **argv)
     treeOut->Branch("c6",Channel6VoltagesRaw_,"c6[1024]/F");
     treeOut->Branch("c7",Channel7VoltagesRaw_,"c7[1024]/F");
     treeOut->Branch("c8",Channel8VoltagesRaw_,"c8[1024]/F");
-   treeOut->Branch("t",t_,"t[1024]/I");
+    treeOut->Branch("t",t_,"t[1024]/I");
 
   }
 
   //read all entries and fill the histograms
   Long64_t nentries = t1->GetEntries();
-  //nentries = 100;
+  
+  //DEBUGGING: set num entries to change (comment out when done)
+  //nentries = 2000;
 
   for (Long64_t iEntry=0;iEntry<nentries;iEntry++)   
     {
@@ -360,6 +370,7 @@ int main (int argc, char **argv)
       //////////////////////
       // end convert to Volts
       //////////////////////
+
 
       // Set raw pulses
       for (int ii=0;ii<Nsamples;ii++) {
@@ -485,16 +496,26 @@ int main (int argc, char **argv)
       float base6 = LinearFit_Baseline( CH6pulse, index_min6, 10 );
       float base7 = LinearFit_Baseline( CH7pulse, index_min7, 10 );
       float base8 = LinearFit_Baseline( CH8pulse, index_min8, 10 );
+<<<<<<< HEAD
 
       /*base1 = 0;
       base2 = 0;
+=======
+    /*  base1 = 0;
+      base2 = 0;        
+>>>>>>> 7ace26a8e87e9b7269fa37c6080a6f279fa5cdfe
       base3 = 0;
       base4 = 0;
       base5 = 0;
       base6 = 0;
       base7 = 0;
+<<<<<<< HEAD
       base8 = 0;
       */
+=======
+      base8 = 0; */
+
+>>>>>>> 7ace26a8e87e9b7269fa37c6080a6f279fa5cdfe
       //std::cout << "baseline: " << base1 << " " << base2 << "\n";
 
       /////////////////////////
@@ -504,6 +525,35 @@ int main (int argc, char **argv)
       ch2Amp = -1 * Channel2Voltages_[index_min2] - base2;
       ch3Amp = -1 * Channel3Voltages_[index_min3] - base3;
       ch4Amp = -1 * Channel4Voltages_[index_min4] - base4;
+      
+      //////////////////////////////////////////////////////////////////////
+      
+      // DEBUGGING CODE 
+      /*
+      std::cout << "==========" << iEntry << "==========" << std::endl;
+      std::cout << index_min4 << "," << index_max4 << std::endl;
+      
+      float max = 0.0;
+      int maxi = 0;
+      for (int i =  0; i < sizeof(Channel4Voltages_); i++) {
+        if (Channel4Voltages_[i] < max) {
+            max = Channel4Voltages_[i];
+            maxi = i;}
+      }
+      
+      float max2 = 0.0;
+      int maxi2 = 0;
+      for (int i =  0; i < sizeof(Channel4VoltagesRaw_); i++) {
+        if (Channel4VoltagesRaw_[i] < max) {
+            max2 = Channel4VoltagesRaw_[i];
+            maxi2 = i;}
+      }
+      
+      std::cout << "Raw: " << maxi2 << "," << max2 << std::endl;
+      std::cout << "Outputed: " << maxi << "," << max << "\n" << std::endl;
+      */
+      ////////////////////////////////////////////////////////////////////////
+      
       ch5Amp = -1 * Channel5Voltages_[index_min5] - base5;
       ch6Amp = -1 * Channel6Voltages_[index_min6] - base6;
       ch7Amp = -1 * Channel7Voltages_[index_min7] - base7;
@@ -531,14 +581,14 @@ int main (int argc, char **argv)
       // float timepeak6 =  GausFit_MeanTime(CH6pulse, index_min6 - 6*splineBinFactor, index_min6+6*splineBinFactor);
       // float timepeak7 =  GausFit_MeanTime(CH7pulse, index_min7 - 6*splineBinFactor, index_min7+6*splineBinFactor);
       // float timepeak8 =  GausFit_MeanTime(CH8pulse, index_min8 - 6*splineBinFactor, index_min8+6*splineBinFactor);
-      float timepeak1 =  GausFit_MeanTime(CH1pulse, index_min1 - 4*splineBinFactor, index_min1+5*splineBinFactor);
-      float timepeak2 =  GausFit_MeanTime(CH2pulse, index_min2 - 4*splineBinFactor, index_min2+5*splineBinFactor);
+      float timepeak1 =  GausFit_MeanTime(CH1pulse, index_min1 - 4*splineBinFactor, index_min1+4*splineBinFactor);
+      float timepeak2 =  GausFit_MeanTime(CH2pulse, index_min2 - 3*splineBinFactor, index_min2+4*splineBinFactor);
       float timepeak3 =  GausFit_MeanTime(CH3pulse, index_min3 - 9*splineBinFactor, index_min3+9*splineBinFactor);
-      float timepeak4 =  GausFit_MeanTime(CH4pulse, index_min4 - 4*splineBinFactor, index_min4+5*splineBinFactor);
-      float timepeak5 =  GausFit_MeanTime(CH5pulse, index_min5 - 4*splineBinFactor, index_min5+5*splineBinFactor);
-      float timepeak6 =  GausFit_MeanTime(CH6pulse, index_min6 - 4*splineBinFactor, index_min6+5*splineBinFactor);
-      float timepeak7 =  GausFit_MeanTime(CH7pulse, index_min7 - 4*splineBinFactor, index_min7+5*splineBinFactor);
-      float timepeak8 =  GausFit_MeanTime(CH8pulse, index_min8 - 4*splineBinFactor, index_min8+5*splineBinFactor);
+      float timepeak4 =  GausFit_MeanTime(CH4pulse, index_min4 - 8*splineBinFactor, index_min4+7*splineBinFactor);
+      float timepeak5 =  GausFit_MeanTime(CH5pulse, index_min5 - 4*splineBinFactor, index_min5+4*splineBinFactor);
+      float timepeak6 =  GausFit_MeanTime(CH6pulse, index_min6 - 4*splineBinFactor, index_min6+4*splineBinFactor);
+      float timepeak7 =  GausFit_MeanTime(CH7pulse, index_min7 - 4*splineBinFactor, index_min7+4*splineBinFactor);
+      float timepeak8 =  GausFit_MeanTime(CH8pulse, index_min8 - 4*splineBinFactor, index_min8+4*splineBinFactor);
                 
       ch1Time_gausfitroot = timepeak1*0.2/splineBinFactor;
       ch2Time_gausfitroot = timepeak2*0.2/splineBinFactor;
@@ -579,11 +629,20 @@ int main (int argc, char **argv)
       //std::cout << "ch2_AFF: " << ch2_AFF << std::endl;
       
       //Fit Rising Edge
+<<<<<<< HEAD
       //FitRisingEdge(CH1pulse, -1, 0, ch1THM, ch1Risetime, base1);
       FitRisingEdge(CH2pulse, -1, 0, ch2THM, ch2Risetime, base2);
       //      FitRisingEdge(CH3pulse, -1, 0, ch3THM, ch3Risetime, 415, 435);
       FitRisingEdge(CH4pulse, -1, 0, ch4THM, ch4Risetime, base4);
             
+=======
+      //std::cout << iEntry << std::endl;
+      FitRisingEdge(CH1pulse, -1, 0, ch1THM, ch1Risetime, base1, false);
+      FitRisingEdge(CH2pulse, -1, 0, ch2THM, ch2Risetime, base2, true);
+      FitRisingEdge(CH3pulse, -1, 0, ch3THM, ch3Risetime, base3, false);
+      FitRisingEdge(CH4pulse, -1, 0, ch4THM, ch4Risetime, base4, false);
+      
+>>>>>>> 7ace26a8e87e9b7269fa37c6080a6f279fa5cdfe
       if(ch1Amp < 0.05 || ch2Amp < 0.05){
         //continue;
       }
@@ -596,6 +655,7 @@ int main (int argc, char **argv)
       //Fill the tree
       treeOut->Fill();
 
+     
       if (iEntry < nentries-1) {      
 	delete CH1pulse;
 	delete CH2pulse;
@@ -634,11 +694,17 @@ int main (int argc, char **argv)
   
   CH1Amp->Write();
   CH2Amp->Write();
+  //CH3Amp->Write();
+  //CH4Amp->Write();
   
   treeOut->Write();
 
   fout->Close();
 }
+
+////////////////////////////////////////////////////
+// Remove off-base (e.g. y-shifted) pulses from Raw Voltage
+////////////////////////////////////////////////////
 
 ////////////////////////////////////////////
 // Do Spline to interpolate
@@ -647,6 +713,8 @@ TH1F* InterpolateWaveform(int nsamples, float *outputwaveform, float *inputwavef
   ROOT::Math::Interpolator cspline( nsamples, ROOT::Math::Interpolation::kCSPLINE);  
 
   TH1F *pulse = new TH1F(name.c_str(),name.c_str(),Nsamples * splineBinFactor,0,Nsamples*splineBinFactor);
+  
+  // IF ACTUALLY HAVE TO DO A SPLINE
   
   if (splineBinFactor != 1) {
     
@@ -664,7 +732,7 @@ TH1F* InterpolateWaveform(int nsamples, float *outputwaveform, float *inputwavef
     //do spline
     for (int i=0; i < nsamples*splineBinFactor; i++) {
       if (i > splineBinFactor) {
-	outputwaveform[i] =  cspline.Eval( pulse->GetXaxis()->GetBinCenter(i+1) / splineBinFactor );
+	    outputwaveform[i] =  cspline.Eval( pulse->GetXaxis()->GetBinCenter(i+1) / splineBinFactor );
       } else {
 	outputwaveform[i] = 0;
       }
@@ -687,12 +755,18 @@ TH1F* InterpolateWaveform(int nsamples, float *outputwaveform, float *inputwavef
       pulse->SetBinContent(i, outputwaveform[i-1]);
       pulse->SetBinError(i,0.001);    
     }
+    
+    // IF SPLINE FACTOR IS  JUST 1 (EG NO SPLINING)
+    
   } else {
 
     for (int ii=0;ii<nsamples;ii++) {	
       outputwaveform[ii] = inputwaveform[ii];
     }
-
+    
+    // GET RID OF THIS LOW PASS NONSENSE
+    
+    /*
     //do low pass filter
     const int n_filter = 3;
     for( int i = 0+n_filter; i < nsamples-n_filter; i++){
@@ -704,6 +778,7 @@ TH1F* InterpolateWaveform(int nsamples, float *outputwaveform, float *inputwavef
       }    
       outputwaveform[i] = temp/count;    
     }
+    */
     
     for (int ii=0;ii<nsamples;ii++) {	
       pulse->SetBinContent(ii+1,outputwaveform[ii]);
@@ -922,7 +997,10 @@ unsigned int CheckPulseQuality( int binMin, int binMax, float *a, float minPulse
   return answer; 
 }
 
-// find the baseline
+///////////////////////
+// find the baseline //
+///////////////////////
+
 float LinearFit_Baseline(TH1F * pulse, const int index_min, const int range)
 {
   TF1 *fBaseline = new TF1("fBaseline","pol0",10, index_min-range);
@@ -935,7 +1013,10 @@ float LinearFit_Baseline(TH1F * pulse, const int index_min, const int range)
   return base;
 }
 
-// find the intercept of the linear fit on the rising edge
+/////////////////////////////////////////////////////////////
+// find the intercept of the linear fit on the rising edge //
+/////////////////////////////////////////////////////////////
+
 float LinearFit_Intercept(TH1F* pulse, const float base, const int index_first, const int index_last)
 {
   TF1* fRise = new TF1("fRise","pol1", index_first, index_last);
@@ -946,7 +1027,11 @@ float LinearFit_Intercept(TH1F* pulse, const float base, const int index_first, 
   return timeIntercept;
 }
 
-// find the mean time from gaus fit
+//////////////////////////////////////
+// find the mean time from gaus fit //
+//////////////////////////////////////
+
+
 float GausFit_MeanTime(TH1F* pulse, const int index_first, const int index_last)
 {
   TF1* fpeak = new TF1("fpeak","gaus", index_first, index_last);
@@ -970,10 +1055,13 @@ float ChannelIntegral(float *a, int peak)
   return integral;
 }
 
+//////////////////////////////////////////////
+// Golden Configuration for Rising Edge Fit //
+//////////////////////////////////////////////
 
-// Golden Configuration for Rising Edge Fit
-void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &risetime, float base ){
+void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &risetime, float base, bool setbins ){
 
+<<<<<<< HEAD
   TF1 *fTopline = new TF1("fTopline","pol0",600, 800);
   float x_min = pulse->GetBinCenter( pulse->GetMaximumBin()-1 );
   float x_max = pulse->GetBinCenter( pulse->GetMaximumBin()+1 );
@@ -981,6 +1069,20 @@ void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &riset
   pulse->Fit("fTopline","Q","", x_min, x_max);
   float top = fTopline->GetParameter(0);
   //std::cout << "top : " << top << " base: " << base << "\n";
+=======
+  //Get the location of the max value bin location
+  int maxBin = pulse->GetMaximumBin();
+  
+  //want the center, not the edges to get "ave" value between max bin locaton and next highest before it
+  float maxBinCenter = pulse -> GetBinCenter(maxBin);
+  float prevBinCenter = pulse -> GetBinCenter(maxBin - 1);
+  
+  //fit the "top" line, that marks the peak value (actually an ave of two highest vals)
+  TF1 *fTopline = new TF1("fTopline","pol0", prevBinCenter, maxBinCenter);
+  pulse->Fit("fTopline","Q","", prevBinCenter, maxBinCenter);
+  float top = fTopline->GetParameter(0); // get the max height
+  //std::cout << "top : " << top << "\n";
+>>>>>>> 7ace26a8e87e9b7269fa37c6080a6f279fa5cdfe
 
   double max=-9999;
   for (int i=10;i<pulse->GetXaxis()->GetNbins();i++) {    
@@ -994,18 +1096,36 @@ void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &riset
   int bM=0;  
   for (int i=10;i<pulse->GetXaxis()->GetNbins();i++) {
     //std::cout << "bin: "<< i << " " << pulse->GetBinContent(i) << "\n";
+<<<<<<< HEAD
     if (pulse->GetBinContent(i) > base + 0.8*(top-base)) {
+=======
+    if (pulse->GetBinContent(i) > base + 0.9*(top-base)) {
+>>>>>>> 7ace26a8e87e9b7269fa37c6080a6f279fa5cdfe
       bM = i;
       break;
     }
   }
   int bL = 0;
   for (int i=10;i<pulse->GetXaxis()->GetNbins();i++) {
-    if (pulse->GetBinContent(i) > base + 0.25*(top-base)) {
+    if (pulse->GetBinContent(i) > base + 0.1*(top-base)) {
       bL = i;
       break;
     }
   }
+  
+  //If want to restrict number of bins that are fit on rising edge
+  bool RESTRICTBINS = setbins;
+  /*
+  if (RESTRICTBINS) {
+    int BINS2FIT = 2; // want bM + bL = BINS2FIT
+    
+    if ((bM - bL) != (BINS2FIT - 1)) {
+        //std::cout << bM << " , " << bL << std::endl;
+        bL = bM - (BINS2FIT - 1);
+        
+    }
+  }
+  */
 
 
   //int bM = pulse->FindFirstBinAbove(0.6*pulse->GetMaximum());
@@ -1020,12 +1140,25 @@ void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &riset
   float m = f->GetParameter(1);
   float b = f->GetParameter(0);
   delete f;
+  
+  //std::cout << m << " * x + " << b << std::endl;
   //std::cout << "HTM: " << 0.2*(0.2*pulse->GetMaximum()-b)/m << std::endl;
+<<<<<<< HEAD
   THM = 0.2*(base+0.5*(top-base)-b)/m;//converted to picoseconds
   //risetime = 0.2*(base+0.75*(top-base)-b)/m - 0.2*(base+0.25*(top-base)-b)/m;
   risetime = 0.2*(0.75*top-0.25*top)/m;
   
+=======
+  
+  THM = 0.2*(base+0.5*(top-base)-b)/m;//converted to nanoseconds
+//  if (THM < 65 or THM > 66.1) {
+//  std::cout << THM << "\n" << std::endl;}
+  
+  //risetime = 0.2*(base+0.7*(top-base)-b)/m - 0.2*(base+0.3*(top-base)-b)/m;
+  risetime = 0.2*(0.9*top-0.1*top)/m;
+>>>>>>> 7ace26a8e87e9b7269fa37c6080a6f279fa5cdfe
 }
+
 
 //For SiPMs on scintillator
 // void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &risetime ){

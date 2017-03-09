@@ -8,17 +8,26 @@ LDFLAGS := $(shell root-config --glibs) $(STDLIBDIR) -lMathMore
 
 CPPFLAGS += -g
 
-TARGET5 = analyze_t1058
+TARGET = analyze_t1058_TGraph
+TARGET1 = analyze_t1058
 
-SRC5 = analyze_t1058.cc
+SRC = analyze_t1058_TGraph.cc
+SRC1 = analyze_t1058.cc
 
-OBJ5 = $(SRC5:.cc=.o)
+OBJ = $(SRC:.cc=.o)
+OBJ1 = $(SRC1:.cc=.o)
 
-all : $(TARGET5)
+all : $(TARGET) $(TARGET1)
 
 
-$(TARGET5) : $(OBJ5)
-	$(LD) $(CPPFLAGS) -o $(TARGET5) $(OBJ5) $(LDFLAGS)
+$(TARGET) : $(OBJ)
+	$(LD) $(CPPFLAGS) -o $(TARGET) $(OBJ) $(LDFLAGS)
+	@echo $@
+	@echo $<
+	@echo $^
+
+$(TARGET1) : $(OBJ1)
+	$(LD) $(CPPFLAGS) -o $(TARGET1) $(OBJ1) $(LDFLAGS)
 	@echo $@
 	@echo $<
 	@echo $^
@@ -28,5 +37,5 @@ $(TARGET5) : $(OBJ5)
 	@echo $@	
 	@echo $<
 clean :
-	rm -f *.o src/*.o $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) *~
+	rm -f *.o src/*.o $(TARGET) $(TARGET1) *~
 
