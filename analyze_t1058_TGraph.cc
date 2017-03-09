@@ -329,7 +329,7 @@ int main (int argc, char **argv)
       //Create baseline corrected TGraphs (make sure you invert your pulse if they are negative)
       //----------------------------------------------------------------------------------------
       pulse1 = new TGraphErrors( GetTGraph( Channel1VoltagesRaw_, ti1_, false ) );
-      pulse2 = new TGraphErrors( GetTGraph( Channel2VoltagesRaw_, ti2_, false ) );
+      pulse2 = new TGraphErrors( GetTGraph( Channel2VoltagesRaw_, ti2_, true ) );
       pulse3 = new TGraphErrors( GetTGraph( Channel3VoltagesRaw_, ti3_, false ) );
       pulse4 = new TGraphErrors( GetTGraph( Channel4VoltagesRaw_, ti4_, false ) );
       
@@ -345,7 +345,7 @@ int main (int argc, char **argv)
       //or the late time samples to do the baseline fit
       //NOTE: if your pulse is negative set _findMin (last input in the FindMaxAbsolute function) flag to <true>
       int index_min1 = FindMaxAbsolute(1024, Channel1VoltagesRaw_, false); // return index of the max
-      int index_min2 = FindMaxAbsolute(1024, Channel2VoltagesRaw_, false); // return index of the max
+      int index_min2 = FindMaxAbsolute(1024, Channel2VoltagesRaw_, true); // return index of the max
       int index_min3 = FindMaxAbsolute(1024, Channel3VoltagesRaw_, false); // return index of the max
       int index_min4 = FindMaxAbsolute(1024, Channel4VoltagesRaw_, false); // return index of the max
 
@@ -405,13 +405,13 @@ int main (int argc, char **argv)
       //-------------------
       //for debugging the fits visually
       //--------------------
+
       
       TCanvas* c = new TCanvas("c","c",600,600);
       pulse2->GetXaxis()->SetRange(0,1024);
       pulse2->SetMarkerStyle(20);
       pulse2->Draw("AP");
       c->SaveAs("pulse1.pdf");
-      
       
       delete pulse1;
       delete pulse2;
