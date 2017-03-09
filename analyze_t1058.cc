@@ -497,8 +497,6 @@ int main (int argc, char **argv) {
       float base7 = LinearFit_Baseline( CH7pulse, index_min7, 10 );
       float base8 = LinearFit_Baseline( CH8pulse, index_min8, 10 );
       
-      /*base1 = 0;
-      base2 = 0;
       /*  base1 = 0;
       base2 = 0;        
       base3 = 0;
@@ -621,20 +619,12 @@ int main (int argc, char **argv) {
       //std::cout << "ch2_AFF: " << ch2_AFF << std::endl;
       
       //Fit Rising Edge
-<<<<<<< HEAD
-      //FitRisingEdge(CH1pulse, -1, 0, ch1THM, ch1Risetime, base1);
-      FitRisingEdge(CH2pulse, -1, 0, ch2THM, ch2Risetime, base2);
-      //      FitRisingEdge(CH3pulse, -1, 0, ch3THM, ch3Risetime, 415, 435);
-      FitRisingEdge(CH4pulse, -1, 0, ch4THM, ch4Risetime, base4);
-            
-=======
       //std::cout << iEntry << std::endl;
       FitRisingEdge(CH1pulse, -1, 0, ch1THM, ch1Risetime, base1, false);
       FitRisingEdge(CH2pulse, -1, 0, ch2THM, ch2Risetime, base2, true);
       FitRisingEdge(CH3pulse, -1, 0, ch3THM, ch3Risetime, base3, false);
       FitRisingEdge(CH4pulse, -1, 0, ch4THM, ch4Risetime, base4, false);
       
->>>>>>> 7ace26a8e87e9b7269fa37c6080a6f279fa5cdfe
       if(ch1Amp < 0.05 || ch2Amp < 0.05){
         //continue;
       }
@@ -1053,7 +1043,6 @@ float ChannelIntegral(float *a, int peak)
 
 void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &risetime, float base, bool setbins ){
 
-<<<<<<< HEAD
   TF1 *fTopline = new TF1("fTopline","pol0",600, 800);
   float x_min = pulse->GetBinCenter( pulse->GetMaximumBin()-1 );
   float x_max = pulse->GetBinCenter( pulse->GetMaximumBin()+1 );
@@ -1061,8 +1050,7 @@ void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &riset
   pulse->Fit("fTopline","Q","", x_min, x_max);
   float top = fTopline->GetParameter(0);
   //std::cout << "top : " << top << " base: " << base << "\n";
-=======
-  //Get the location of the max value bin location
+    /* //Get the location of the max value bin location
   int maxBin = pulse->GetMaximumBin();
   
   //want the center, not the edges to get "ave" value between max bin locaton and next highest before it
@@ -1074,7 +1062,7 @@ void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &riset
   pulse->Fit("fTopline","Q","", prevBinCenter, maxBinCenter);
   float top = fTopline->GetParameter(0); // get the max height
   //std::cout << "top : " << top << "\n";
->>>>>>> 7ace26a8e87e9b7269fa37c6080a6f279fa5cdfe
+  */
 
   double max=-9999;
   for (int i=10;i<pulse->GetXaxis()->GetNbins();i++) {    
@@ -1088,11 +1076,7 @@ void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &riset
   int bM=0;  
   for (int i=10;i<pulse->GetXaxis()->GetNbins();i++) {
     //std::cout << "bin: "<< i << " " << pulse->GetBinContent(i) << "\n";
-<<<<<<< HEAD
     if (pulse->GetBinContent(i) > base + 0.8*(top-base)) {
-=======
-    if (pulse->GetBinContent(i) > base + 0.9*(top-base)) {
->>>>>>> 7ace26a8e87e9b7269fa37c6080a6f279fa5cdfe
       bM = i;
       break;
     }
@@ -1135,20 +1119,10 @@ void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &riset
   
   //std::cout << m << " * x + " << b << std::endl;
   //std::cout << "HTM: " << 0.2*(0.2*pulse->GetMaximum()-b)/m << std::endl;
-<<<<<<< HEAD
   THM = 0.2*(base+0.5*(top-base)-b)/m;//converted to picoseconds
   //risetime = 0.2*(base+0.75*(top-base)-b)/m - 0.2*(base+0.25*(top-base)-b)/m;
   risetime = 0.2*(0.75*top-0.25*top)/m;
   
-=======
-  
-  THM = 0.2*(base+0.5*(top-base)-b)/m;//converted to nanoseconds
-//  if (THM < 65 or THM > 66.1) {
-//  std::cout << THM << "\n" << std::endl;}
-  
-  //risetime = 0.2*(base+0.7*(top-base)-b)/m - 0.2*(base+0.3*(top-base)-b)/m;
-  risetime = 0.2*(0.9*top-0.1*top)/m;
->>>>>>> 7ace26a8e87e9b7269fa37c6080a6f279fa5cdfe
 }
 
 
