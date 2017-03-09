@@ -406,12 +406,13 @@ int main (int argc, char **argv)
       //for debugging the fits visually
       //--------------------
 
-      
+      /*
       TCanvas* c = new TCanvas("c","c",600,600);
       pulse2->GetXaxis()->SetRange(0,1024);
       pulse2->SetMarkerStyle(20);
       pulse2->Draw("AP");
       c->SaveAs("pulse1.pdf");
+      */
       
       delete pulse1;
       delete pulse2;
