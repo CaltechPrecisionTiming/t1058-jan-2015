@@ -29,7 +29,7 @@ bool doFilter = false;
 
 int FindMaxAbsolute( int n, float *a, bool _findMin = false );
 TGraphErrors* GetTGraphFilter( float* channel, float* time, TString pulseName, bool makePlot );
-float GetPulseIntegral(int peak, float *a, std::string option);
+float GetPulseIntegral(int peak, float *a, float *t, std::string option);
 float GetBaseline(TGraphErrors * pulse, int i_low, int i_high, TString fname );
 TGraphErrors GetTGraph(  float* channel, float* time, bool invert = false );
 int FindRealMin( int n, float *a);
@@ -38,7 +38,7 @@ void RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, float* tstamp
 float LED( TH1F * pulse, double threshold, int nsamples, int splineBinFactor );
 float LinearFit_Baseline(TH1F * pulse, const int index_min, const int range);
 float LinearFit_Intercept(TH1F * pulse, const float base, const int index_first, const int index_last);
-float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index_first, const int index_last);
+float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index_first, const int index_last, TString pulseName, bool makePlot );
 void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &risetime, float base);
 void FitFullPulse(TH1F* pulse, float &par0, float &par1, float &par2);
 TH1F* InterpolateWaveform(int nsamples, float* outputwaveform, float *inputwaveform, int splineBinFactor, std::string name);
@@ -309,7 +309,7 @@ int main (int argc, char **argv)
       // Correct pulse shape for baseline offset
       for(int j = 0; j < 1024; j++)
       	{
-      	  Channel1VoltagesRaw_[j] = Channel1VoltagesRaw_[j] - baseline1;
+      	  //Channel1VoltagesRaw_[j] = Channel1VoltagesRaw_[j] - baseline1;
       	  Channel2VoltagesRaw_[j] = Channel2VoltagesRaw_[j] - baseline2;
 	  Channel3VoltagesRaw_[j] = Channel3VoltagesRaw_[j] - baseline3;
       	  Channel4VoltagesRaw_[j] = Channel4VoltagesRaw_[j] - baseline4;
@@ -328,9 +328,9 @@ int main (int argc, char **argv)
       //----------------------------------------------------------------------------------------
       //Create baseline corrected TGraphs (make sure you invert your pulse if they are negative)
       //----------------------------------------------------------------------------------------
-      pulse1 = new TGraphErrors( GetTGraph( Channel1VoltagesRaw_, ti1_, false ) );
+      pulse1 = new TGraphErrors( GetTGraph( Channel1VoltagesRaw_, ti1_, true ) );
       pulse2 = new TGraphErrors( GetTGraph( Channel2VoltagesRaw_, ti2_, true ) );
-      pulse3 = new TGraphErrors( GetTGraph( Channel3VoltagesRaw_, ti3_, false ) );
+      pulse3 = new TGraphErrors( GetTGraph( Channel3VoltagesRaw_, ti3_, true ) );
       pulse4 = new TGraphErrors( GetTGraph( Channel4VoltagesRaw_, ti4_, false ) );
       
       // if (doFilter) {
@@ -344,9 +344,9 @@ int main (int argc, char **argv)
       //Find the absolute maximum. This is only used as a rough determination to decide if we'll use the early time samples
       //or the late time samples to do the baseline fit
       //NOTE: if your pulse is negative set _findMin (last input in the FindMaxAbsolute function) flag to <true>
-      int index_min1 = FindMaxAbsolute(1024, Channel1VoltagesRaw_, false); // return index of the max
+      int index_min1 = FindMaxAbsolute(1024, Channel1VoltagesRaw_, true); // return index of the max
       int index_min2 = FindMaxAbsolute(1024, Channel2VoltagesRaw_, true); // return index of the max
-      int index_min3 = FindMaxAbsolute(1024, Channel3VoltagesRaw_, false); // return index of the max
+      int index_min3 = FindMaxAbsolute(1024, Channel3VoltagesRaw_, true); // return index of the max
       int index_min4 = FindMaxAbsolute(1024, Channel4VoltagesRaw_, false); // return index of the max
 
       //Compute Amplitude : use units V
@@ -362,19 +362,18 @@ int main (int argc, char **argv)
       ch4Amp = tmpAmp;  
       
       //Get Pulse Integral
-      if ( index_min1 != 0 ) ch1Int = GetPulseIntegral( index_min1 , Channel1VoltagesRaw_, "full");
+      if ( index_min1 != 0 ) ch1Int = GetPulseIntegral( index_min1 , Channel1VoltagesRaw_, ti1_, "part");
       else ch1Int = 0.0;
       
-
-
-      if ( index_min2 != 0 ) ch2Int = GetPulseIntegral( index_min2 , Channel2VoltagesRaw_, "full");
+      
+      if ( index_min2 != 0 ) ch2Int = GetPulseIntegral( index_min2 , Channel2VoltagesRaw_,ti2_,  "part");
       else ch2Int = 0.0;
       
 
-      if ( index_min3 != 0 ) ch3Int = GetPulseIntegral( index_min3 , Channel3VoltagesRaw_, "full");
+      if ( index_min3 != 0 ) ch3Int = GetPulseIntegral( index_min3 , Channel3VoltagesRaw_, ti3_,  "full");
       else ch3Int = 0.0;
 
-      if ( index_min4 != 0 ) ch4Int = GetPulseIntegral( index_min4 , Channel4VoltagesRaw_, "full");
+      if ( index_min4 != 0 ) ch4Int = GetPulseIntegral( index_min4 , Channel4VoltagesRaw_, ti4_, "full");
       else ch4Int = 0.0;
       
 
@@ -382,9 +381,19 @@ int main (int argc, char **argv)
       //----------------
       // Gauss TimeStamp
       //----------------
-      ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 3, 3);
-
-
+      //if( iEntry <9750 && iEntry>9700 )
+      //{
+	//ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 3, 3, pulseName1, false);
+	//ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 3, 3, pulseName2, false); 
+      //std::cout << iEntry << "ch1Time_gausfitroot" << " " << ch1Time_gausfitroot << "ch2Time_gausfitroot" << ch2Time_gausfitroot << std::endl;
+     // }
+     // else
+     // {
+	ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 3, 3, pulseName1, false);
+	ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 3, 3, pulseName2, false);
+	ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 3, pulseName3, false);
+      //}
+     
       //---------------------
       // RisingEdge TimeStamp
       //---------------------
@@ -406,13 +415,13 @@ int main (int argc, char **argv)
       //for debugging the fits visually
       //--------------------
 
-      /*
+      if(iEntry==15){
       TCanvas* c = new TCanvas("c","c",600,600);
-      pulse2->GetXaxis()->SetRange(0,1024);
-      pulse2->SetMarkerStyle(20);
-      pulse2->Draw("AP");
+      pulse1->GetXaxis()->SetRange(0,1024);
+      pulse1->SetMarkerStyle(20);
+      pulse1->Draw("AP");
       c->SaveAs("pulse1.pdf");
-      */
+      }
       
       delete pulse1;
       delete pulse2;
@@ -508,7 +517,7 @@ float GetBaseline(TGraphErrors * pulse, int i_low, int i_high, TString fname )
 }
 
 
-float GetPulseIntegral(int peak, float *a, std::string option) 
+float GetPulseIntegral(int peak, float *a, float *t, std::string option) 
 {
   float integral = 0.;
 
@@ -518,8 +527,17 @@ float GetPulseIntegral(int peak, float *a, std::string option)
     }
   }
   else {
-    for (int i=peak-20; i < peak+25; i++) {
-      integral += a[i] * 0.2 * 1e-9 * (1.0/50.0) * 1e12; //in units of pC, for 50Ohm termination
+    //for (int i=peak-4; i < peak+4; i++) {
+    //}
+    for (int i=peak-4; i < peak+4; i++) {
+      //it makes more sense to do the integral around the peak rather than a fixed window
+      //integral += a[i] * 0.2 * 1e-9 * (1.0/50.0) * 1e12; //in units of pC, for 50Ohm termination
+      //trapezoid
+      //integral += 0.5*(a[i]+a[i-1]) * (t[i]-t[i-1]) * 1e-9 * (1.0/50.0) * 1e12; //in units of pC, for 50Ohm termination
+      
+      //Simpson's Rule for equaled space-->Cartwright correction for unequaled space, only worked for odd points
+      integral += ( (t[i+2]-t[i]) / 6.0 ) * ( ( 2-(t[i+2]-t[i+1])/(t[i+1]-t[i]) )* a[i] + (t[i+2]-t[i])*(t[i+2]-t[i])/((t[i+2]-t[i+1])*(t[i+1]-t[i])) * a[i+1] + ( 2-(t[i+1]-t[i])/(t[i+2]-t[i+1]) ) * a[i+2] ) * 1e-9 * (1.0/50.0) * 1e12; //in units of pC, for 50Ohm termination
+      i++;
     }
   }
   return -1.0 * integral;
@@ -665,7 +683,7 @@ int FindRealMin( int n, float *a) {
   return loc_new;
 }
 
-float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index_first, const int index_last)
+float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index_first, const int index_last, TString pulseName, bool makePlot)
 {
   double x_low, x_high, y;
   pulse->GetPoint(index_min-index_first, x_low, y);
@@ -674,6 +692,18 @@ float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index
   TF1* fpeak = new TF1("fpeak","gaus", x_low, x_high);
   pulse->Fit("fpeak","Q","", x_low, x_high);
   float timepeak = fpeak->GetParameter(1);
+  if ( makePlot )
+    {
+      std::cout << "make plot" << std::endl;
+      TCanvas* c = new TCanvas("canvas","canvas",800,400) ;
+      pulse->GetXaxis()->SetLimits(x_low-10, x_high+10);
+      pulse->SetMarkerSize(1.5);
+      pulse->SetMarkerStyle(20);
+      pulse->Draw("AP");
+      c->SaveAs(pulseName+"GausFit.pdf");
+      //delete c;
+    }
+  
   delete fpeak;
   
   return timepeak;
