@@ -28,12 +28,14 @@ enum PulseQuality {
 bool doFilter = false;
 
 int FindMaxAbsolute( int n, float *a, bool _findMin = false );
+bool DetectDoublePeak( int n, float *a, bool _findMin = false );
+
 TGraphErrors* GetTGraphFilter( float* channel, float* time, TString pulseName, bool makePlot );
 float GetPulseIntegral(int peak, float *a, float *t, std::string option);
 float GetBaseline(TGraphErrors * pulse, int i_low, int i_high, TString fname );
 TGraphErrors GetTGraph(  float* channel, float* time, bool invert = false );
 int FindRealMin( int n, float *a);
-void RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, float* tstamp, int event, TString fname, bool makePlot );
+void RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, float* tstamp, int event, TString fname, bool makePlot, bool trigger = false );
 
 float LED( TH1F * pulse, double threshold, int nsamples, int splineBinFactor );
 float LinearFit_Baseline(TH1F * pulse, const int index_min, const int range);
@@ -309,7 +311,7 @@ int main (int argc, char **argv)
       // Correct pulse shape for baseline offset
       for(int j = 0; j < 1024; j++)
       	{
-      	  //Channel1VoltagesRaw_[j] = Channel1VoltagesRaw_[j] - baseline1;
+      	  Channel1VoltagesRaw_[j] = Channel1VoltagesRaw_[j] - baseline1;
       	  Channel2VoltagesRaw_[j] = Channel2VoltagesRaw_[j] - baseline2;
 	  Channel3VoltagesRaw_[j] = Channel3VoltagesRaw_[j] - baseline3;
       	  Channel4VoltagesRaw_[j] = Channel4VoltagesRaw_[j] - baseline4;
@@ -344,6 +346,14 @@ int main (int argc, char **argv)
       //Find the absolute maximum. This is only used as a rough determination to decide if we'll use the early time samples
       //or the late time samples to do the baseline fit
       //NOTE: if your pulse is negative set _findMin (last input in the FindMaxAbsolute function) flag to <true>
+      //std::cout << "=====event " << iEntry+1 << "==========" << std::endl;
+      
+      if ( DetectDoublePeak(1024, Channel1VoltagesRaw_, true) )
+	{
+	  //std::cout << "removing event: " << iEntry+1 << std::endl;
+	  continue;
+	}
+      //if ( iEntry+1 > 12 ) break;
       int index_min1 = FindMaxAbsolute(1024, Channel1VoltagesRaw_, true); // return index of the max
       int index_min2 = FindMaxAbsolute(1024, Channel2VoltagesRaw_, true); // return index of the max
       int index_min3 = FindMaxAbsolute(1024, Channel3VoltagesRaw_, true); // return index of the max
@@ -365,11 +375,9 @@ int main (int argc, char **argv)
       if ( index_min1 != 0 ) ch1Int = GetPulseIntegral( index_min1 , Channel1VoltagesRaw_, ti1_, "part");
       else ch1Int = 0.0;
       
-      
       if ( index_min2 != 0 ) ch2Int = GetPulseIntegral( index_min2 , Channel2VoltagesRaw_,ti2_,  "part");
       else ch2Int = 0.0;
       
-
       if ( index_min3 != 0 ) ch3Int = GetPulseIntegral( index_min3 , Channel3VoltagesRaw_, ti3_,  "full");
       else ch3Int = 0.0;
 
@@ -389,9 +397,9 @@ int main (int argc, char **argv)
      // }
      // else
      // {
-	ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 3, 3, pulseName1, false);
+	ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 4, 2, pulseName1, false);
 	ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 3, 3, pulseName2, false);
-	ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 3, pulseName3, false);
+	//ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 3, pulseName3, false);
       //}
      
       //---------------------
@@ -403,9 +411,9 @@ int main (int argc, char **argv)
       float fs4[5];
       
       RisingEdgeFitTime( pulse1, index_min1, fs1, iEntry, "linearFit_" + pulseName1, false);
-      RisingEdgeFitTime( pulse2, index_min2, fs2, iEntry, "linearFit_" + pulseName2, false);
-      RisingEdgeFitTime( pulse3, index_min3, fs3, iEntry, "linearFit_" + pulseName3, false);
-      RisingEdgeFitTime( pulse4, index_min4, fs4, iEntry, "linearFit_" + pulseName4, false);
+      //RisingEdgeFitTime( pulse2, index_min2, fs2, iEntry, "linearFit_" + pulseName2, false);
+      //RisingEdgeFitTime( pulse3, index_min3, fs3, iEntry, "linearFit_" + pulseName3, false);
+      RisingEdgeFitTime( pulse4, index_min4, fs4, iEntry, "linearFit_" + pulseName4, false, true);
       ch1THM = fs1[3];
       ch2THM = fs2[3];
       ch3THM = fs3[3];
@@ -415,12 +423,16 @@ int main (int argc, char **argv)
       //for debugging the fits visually
       //--------------------
 
-      if(iEntry==15){
+      if(iEntry+1==54){
       TCanvas* c = new TCanvas("c","c",600,600);
-      pulse1->GetXaxis()->SetRange(0,1024);
+      pulse1->GetXaxis()->SetRange(300,400);
       pulse1->SetMarkerStyle(20);
       pulse1->Draw("AP");
       c->SaveAs("pulse1.pdf");
+      pulse2->GetXaxis()->SetRange(300,400);
+      pulse2->SetMarkerStyle(20);
+      pulse2->Draw("AP");
+      c->SaveAs("pulse2.pdf");
       }
       
       delete pulse1;
@@ -454,6 +466,45 @@ TGraphErrors GetTGraph(  float* channel, float* time, bool invert )
   return tg;
 };
 
+bool DetectDoublePeak( int n, float *a, bool _findMin )
+{
+  if (n <= 0 || !a) return false;
+  int loc = 0;
+  int ncounts = 0;
+  if ( _findMin )
+    {
+      float xmin = a[5];
+      for  (int i = 5; i < n-10; i++) {
+	if ( a[i] < xmin && a[i+1] < 0.8*a[i] && a[i] < -10. / 4096. )  
+	  {
+	    xmin = a[i];
+	    if ( loc == i-1 ) ncounts++;
+	    else if ( loc != i-1 && ncounts >= 3 ) return true;
+	    else ncounts = 0;
+	    //std::cout << "loc: " <<  i << " " << a[i] << " " << ncounts << std::endl;
+	    loc = i;
+	  }
+      }
+    }
+  else
+    {
+      float xmax = a[5];
+      for  ( int i = 6; i < n-10; i++ )
+	{
+	  if ( a[i] > xmax && a[i+1] < 0.9*a[i] && a[i] > 10. / 4096. )  
+	    {
+	      xmax = a[i];
+	      if ( loc == i-1 ) ncounts++;
+	      else if ( loc != i-1 && ncounts >= 3 ) return true;
+	      else ncounts = 0;
+	      loc = i;
+	    }
+	}
+    }
+  
+  return false;
+}
+
 int FindMaxAbsolute( int n, float *a, bool _findMin ) {
   
   if (n <= 0 || !a) return -1;
@@ -463,7 +514,7 @@ int FindMaxAbsolute( int n, float *a, bool _findMin ) {
       float xmin = a[5];
       for  (int i = 5; i < n-10; i++) {
 	// if (xmin > a[i] && a[i+1] < 0.5*a[i] && a[i] < -40. )  
-	if (xmin > a[i] && a[i+1] < 0.5*a[i] && a[i] < -40. / 4096. )  
+	if (xmin > a[i] && a[i+1] < 0.5*a[i] && a[i] < -10. / 4096. )  
 	  {
 	    //std::cout << i << " " << a[i] << std::endl;
 	    xmin = a[i];
@@ -530,6 +581,7 @@ float GetPulseIntegral(int peak, float *a, float *t, std::string option)
     //for (int i=peak-4; i < peak+4; i++) {
     //}
     for (int i=peak-4; i < peak+4; i++) {
+    //for (int i = 389; i < 397; i++){
       //it makes more sense to do the integral around the peak rather than a fixed window
       //integral += a[i] * 0.2 * 1e-9 * (1.0/50.0) * 1e12; //in units of pC, for 50Ohm termination
       //trapezoid
@@ -709,7 +761,7 @@ float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index
   return timepeak;
 }
 
-void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstamp, int event, TString fname, bool makePlot )
+void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstamp, int event, TString fname, bool makePlot, bool trigger )
 {
   double x_low, x_high, y, dummy;
   double ymax;
@@ -736,10 +788,12 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstam
   //----------------------------------------------------------------
   //The following is the best configuration for picsec laser trigger
   //----------------------------------------------------------------
-  pulse->GetPoint(index_min-8, x_low, y);
-  pulse->GetPoint(index_min-2, x_high, y);
-  pulse->GetPoint(index_min, dummy, y);
-  
+  if (trigger)
+    {
+      pulse->GetPoint(index_min-8, x_low, y);
+      pulse->GetPoint(index_min-2, x_high, y);
+      pulse->GetPoint(index_min, dummy, y);
+    }
   TF1* flinear = new TF1("flinear","[0]*x+[1]", x_low, x_high );
   float max = -9999;
   double* yy = pulse->GetY();
