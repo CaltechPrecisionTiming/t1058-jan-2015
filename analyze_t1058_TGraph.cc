@@ -414,7 +414,7 @@ int main (int argc, char **argv)
       //RisingEdgeFitTime( pulse2, index_min2, fs2, iEntry, "linearFit_" + pulseName2, false);
       //RisingEdgeFitTime( pulse3, index_min3, fs3, iEntry, "linearFit_" + pulseName3, false);
       RisingEdgeFitTime( pulse4, index_min4, fs4, iEntry, "linearFit_" + pulseName4, false, true);
-      ch1THM = fs1[3];
+      ch1THM = fs1[2];
       ch2THM = fs2[3];
       ch3THM = fs3[3];
       ch4THM = fs4[3];
@@ -423,17 +423,18 @@ int main (int argc, char **argv)
       //for debugging the fits visually
       //--------------------
 
-      if(iEntry+1==54){
+
+      /*if(iEntry+1<=200){
       TCanvas* c = new TCanvas("c","c",600,600);
       pulse1->GetXaxis()->SetRange(300,400);
       pulse1->SetMarkerStyle(20);
       pulse1->Draw("AP");
-      c->SaveAs("pulse1.pdf");
+      c->SaveAs(Form("pulse1_event%d.pdf", iEntry+1));
       pulse2->GetXaxis()->SetRange(300,400);
       pulse2->SetMarkerStyle(20);
       pulse2->Draw("AP");
       c->SaveAs("pulse2.pdf");
-      }
+      }*/
       
       delete pulse1;
       delete pulse2;
@@ -514,7 +515,7 @@ int FindMaxAbsolute( int n, float *a, bool _findMin ) {
       float xmin = a[5];
       for  (int i = 5; i < n-10; i++) {
 	// if (xmin > a[i] && a[i+1] < 0.5*a[i] && a[i] < -40. )  
-	if (xmin > a[i] && a[i+1] < 0.5*a[i] && a[i] < -10. / 4096. )  
+	if (xmin > a[i] && a[i+1] < 0.3*a[i] && a[i] < -10. / 4096. )  
 	  {
 	    //std::cout << i << " " << a[i] << std::endl;
 	    xmin = a[i];
@@ -763,25 +764,31 @@ float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index
 
 void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstamp, int event, TString fname, bool makePlot, bool trigger )
 {
-  double x_low, x_high, y, dummy;
+  double x_low, x_high, xdummy, y, dummy;
   double ymax;
   pulse->GetPoint(index_min, x_low, ymax);
   for ( int i = 1; i < 100; i++ )
     {
       pulse->GetPoint(index_min-i, x_low, y);
       // std::cout<<"BNNNBBB  "<<event<<" "<<ymax<<" "<<x_low<<" "<<y<<std::endl;
-      if ( y < 0.15*ymax ) break;
+      if ( y < 0.2*ymax ) break;
       // if ( y < 0.2*ymax ) break;
    }
 
   for ( int i = 1; i < 100; i++ )
     {
       pulse->GetPoint(index_min-i, x_high, y);
-      if ( y < 0.95*ymax ) break;
+      if ( y < 0.999*ymax ) break;
     }
 
- 
 
+  double ymax_minus1;
+  pulse->GetPoint(index_min, xdummy, ymax_minus1);
+  
+  if( ymax_minus1 > 0.95*ymax ) pulse->GetPoint(index_min-1, x_high, dummy);
+  else pulse->GetPoint(index_min, x_high, ymax);
+  pulse->GetPoint(index_min, x_high, ymax);
+  
   // if(x_low_1<x_low) x_low = x_low_1;
   // if(x_high_1>x_high) x_high = x_high_1;
 
