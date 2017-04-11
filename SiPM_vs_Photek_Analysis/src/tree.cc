@@ -4,6 +4,7 @@
 #include <TStyle.h>
 #include <TCanvas.h>
 #include <TF1.h>
+#include <TMath.h>
 #include <TLatex.h>
 #include <iostream>
 
@@ -32,8 +33,9 @@ TString extraText   = "Preliminary";
 //TString lumiText = "2.32 fb^{-1} (13 TeV)";
 TString lumiText = "12.92 fb^{-1} (13 TeV)";
 
-void tree::Loop()
+void tree::Loop(int amp, int Att, float ND)
 {
+ 
 //   In a ROOT session, you can do:
 //      root> .L tree.C
 //      root> tree t
@@ -58,6 +60,8 @@ void tree::Loop()
 //    fChain->GetEntry(jentry);       //read all branches
 //by  b_branchname->GetEntry(ientry); //read only this branch
 
+  int times = amp-Att;
+  //V0 = Vx10^(-times/20)
   TH1F* ch1_Int = new TH1F("ch1Int", "ch1Int", 1000, 0, 10);
   TH1F* deltaT12 = new TH1F("deltaT12", "deltaT12", 100, -1.6, -1);
    if (fChain == 0) return;
@@ -70,6 +74,7 @@ void tree::Loop()
       if (ientry < 0) break;
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       ch1_Int->Fill(ch1Int);
+      //ch1_Int->Fill(ch1Int*TMath::Power(10,-times*1.0/20.1));
       deltaT12->Fill(t1gausroot-t2gausroot);
       // if (Cut(ientry) < 0) continue;
    }
@@ -77,7 +82,7 @@ void tree::Loop()
    //---------------------
    //FileName
    //---------------------
-   char* fname = "ND1p8";
+   char* fname = "ND0p5";
    
    TCanvas* c = new TCanvas( "c", "c", 2119, 33, 800, 700 );
    c->SetHighLightColor(2);
