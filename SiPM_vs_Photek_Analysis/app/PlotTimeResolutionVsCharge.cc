@@ -31,13 +31,34 @@ TString lumiText = "12.92 fb^{-1} (13 TeV)";
 
 int main ( int argc, char** argv )
 {
+
+  int n = 6;
+  //  ND:         0p5,  0p8,   1p1,   1p4,   1p6,  1p8
+  //  x: charge y: deltaT  
+  float y[]    = {31.92, 36.35, 42.32, 55.67, 71.80, 80.88};
+  float erry[] = { 0.11,  0.12,  0.15,  0.11,  0.21,  0.12};
+  float yTHM[]    = {18.87, 21.72, 30.89, 43.04, 52.34, 60.21};
+  float erryTHM[] = { 0.06,  0.07,  0.10,  0.05,  0.09,  0.09};
+  float x[]    = {1.05, 0.89, 0.39, 0.16, 0.09, 0.06};
+  float errx[] = {0.04, 0.06, 0.09, 0.06, 0.04, 0.03};
+/*  
+  int n = 5;
+  //  ND:         0p5,  0p8,   1p1,   1p4,   1p6
+  //  x: charge y: deltaT  
+  float y[]    = {31.92, 36.35, 42.32, 60.91, 87.24};
+  float erry[] = { 0.11,  0.12,  0.15,  0.06,  0.09};
+  float yTHM[]    = {18.87, 21.72, 30.89, 44.31, 63.24};
+  float erryTHM[] = { 0.06,  0.07,  0.10,  0.05,  0.06};
+  float x[]    = {1.05, 0.88, 0.40, 0.17, 0.10};
+  float errx[] = {0.04, 0.07, 0.10, 0.06, 0.05};
+
   int n = 7;
   float y[]    = {9.77, 12.84, 19.82, 27.98, 41.24,63.64, 84.84};
   float erry[] = {0.06, 0.06, 0.09, 0.14, 0.20,0.31, 0.48};
   float x[]    = {5.50, 3.06, 1.32, 0.69, 0.32, 0.15, 0.07};
   float errx[] = {0.27, 0.23, 0.16, 0.12, 0.08, 0.06, 0.03};
-
-  TGraphErrors* g = new TGraphErrors(n,x,y,errx,erry);
+*/
+   TGraphErrors* g = new TGraphErrors(n,x,y,errx,erry);
 
    TCanvas* c = new TCanvas( "c", "c", 2119, 33, 800, 700 );
    c->SetHighLightColor(2);
@@ -73,5 +94,42 @@ int main ( int argc, char** argv )
    c->SaveAs("deltaT_vs_Charge_SiPM_1x1mm.pdf");
    c->SaveAs("deltaT_vs_Charge_SiPM_1x1mm.png");
    c->SaveAs("deltaT_vs_Charge_SiPM_1x1mm.C");
+  
+   TGraphErrors* gr = new TGraphErrors(n,x,yTHM,errx,erryTHM);
+
+   TCanvas* cr = new TCanvas( "cr", "cr", 2119, 33, 800, 700 );
+   cr->SetHighLightColor(2);
+   cr->SetFillColor(0);
+   cr->SetBorderMode(0);
+   cr->SetBorderSize(2);
+   cr->SetLeftMargin( leftMargin );
+   cr->SetRightMargin( 1.6*rightMargin );
+   cr->SetTopMargin( topMargin );
+   cr->SetBottomMargin( bottomMargin );
+   cr->SetFrameBorderMode(0);
+   cr->SetFrameBorderMode(0);
+   TF1* f1ResTHM = new TF1("f1ResTHM","[0]/x + [1]/sqrt(x) + [2]",x[0],x[n-1]);
+
+   gr->SetTitle(";charge [pC];time resolution [ps]");
+   //gr->GetYaxis()->SetTitle("time resolution [ps]");
+   //gr->GetXaxis()->SetTitle("crharge [pC]");
+   
+   gr->Draw("AP");
+   gr->SetMarkerStyle(20);
+   gr->SetMarkerColor(kBlack);
+   
+   gr->Fit(f1ResTHM,"RE");
+   
+   TLatex latexr;
+   latexr.SetNDC();
+   latexr.SetTextAngle(0);
+   latexr.SetTextColor(kBlack);    
+   latexr.SetTextFont(42);
+   latexr.SetTextAlign(31); 
+   latexr.SetTextSize(0.03);    
+   latexr.DrawLatex(0.87, 0.85, Form("#sigrma_{t} = #fracr{%.2f #pm %.2f [ps]}{Q (pC)} + #frac{%.2f #pm %.2f [ps]}{#sqrt{Q (pC)}} + %.2f #pm %.2f [ps]", f1ResTHM->GetParameter(0), f1ResTHM->GetParError(0), f1ResTHM->GetParameter(1), f1ResTHM->GetParError(1), f1ResTHM->GetParameter(2), f1ResTHM->GetParError(2) ));
+   cr->SaveAs("deltaTTHM_vs_Charge_SiPM_1x1mm.pdf");
+   cr->SaveAs("deltaTTHM_vs_Charge_SiPM_1x1mm.png");
+   cr->SaveAs("deltaTTHM_vs_Charge_SiPM_1x1mm.C");
   return 0;
 }
