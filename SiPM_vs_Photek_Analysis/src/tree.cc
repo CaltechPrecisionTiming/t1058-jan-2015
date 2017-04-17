@@ -62,6 +62,7 @@ void tree::Loop(int amp, int Att, char* ND, float left_ch1, float right_ch1)
 
   float times = (float)amp-Att;
   //V0 = Vx10^(-times/20)
+  //TH1F* ch1_Int = new TH1F("ch1Int", "ch1Int", 1000, 0, 0.35);
   TH1F* ch1_Int = new TH1F("ch1Int", "ch1Int", 1000, 0, 20);
   TH1F* deltaT12 = new TH1F("deltaT12", "deltaT12", 20000, -50, 50);
   TH1F* deltaT12THM = new TH1F("deltaT12THM", "deltaT12THM", 20000, -50, 50);
@@ -78,6 +79,7 @@ void tree::Loop(int amp, int Att, char* ND, float left_ch1, float right_ch1)
       if(ch1Int > left_ch1 && ch1Int < right_ch1 )
       {
       ch1_Int->Fill(ch1Int/TMath::Power(10,times/20.0));
+      //ch1_Int->Fill(ch1Int);
       deltaT12->Fill(t1gausroot-t2gausroot);
       deltaT12THM->Fill(ch1THM-t2gausroot);
       }
@@ -124,7 +126,7 @@ void tree::Loop(int amp, int Att, char* ND, float left_ch1, float right_ch1)
    latex.SetTextFont(42);
    latex.SetTextAlign(31); 
    latex.SetTextSize(0.04);    
-   latex.DrawLatex(0.89, 0.85, Form("Q = %.3f #pm %.3f [pc]", f1Int->GetParameter(1), f1Int->GetParameter(2)));
+   latex.DrawLatex(0.89, 0.85, Form("Q = %.2f #pm %.2f [pc]", f1Int->GetParameter(1), f1Int->GetParameter(2)));
    
    c->SaveAs(Form("chargeCh1_%s.pdf", fname));
    c->SaveAs(Form("chargeCh1_%s.png", fname));
@@ -132,10 +134,11 @@ void tree::Loop(int amp, int Att, char* ND, float left_ch1, float right_ch1)
    //---------------------
    //------deltaT---------
    //---------------------
+
    double deltaT12Mean = deltaT12->GetMean();
    double deltaT12RMS  = deltaT12->GetRMS();
-   deltaT12->GetXaxis()->SetRangeUser(deltaT12Mean-0.5*deltaT12RMS,deltaT12Mean+0.5*deltaT12RMS);
-   TF1* f1DeltaT = new TF1("deltaT","gaus(0)",deltaT12Mean-0.08*deltaT12RMS,deltaT12Mean+0.08*deltaT12RMS);
+   deltaT12->GetXaxis()->SetRangeUser(deltaT12Mean-0.3*deltaT12RMS,deltaT12Mean+0.3*deltaT12RMS);
+   TF1* f1DeltaT = new TF1("deltaT","gaus(0)",deltaT12Mean+0.035*deltaT12RMS,deltaT12Mean+0.055*deltaT12RMS);
    deltaT12->Fit(f1DeltaT,"REL");
    deltaT12->SetTitle("");
    deltaT12->SetStats(0);
@@ -156,8 +159,8 @@ void tree::Loop(int amp, int Att, char* ND, float left_ch1, float right_ch1)
    //---------------------
    double deltaT12THMMean = deltaT12THM->GetMean();
    double deltaT12THMRMS  = deltaT12THM->GetRMS();
-   deltaT12THM->GetXaxis()->SetRangeUser(deltaT12THMMean-0.5*deltaT12THMRMS,deltaT12THMMean+0.5*deltaT12THMRMS);
-   TF1* f1DeltaTTHM = new TF1("deltaTTHM","gaus(0)",deltaT12THMMean-0.04*deltaT12THMRMS,deltaT12THMMean+0.08*deltaT12THMRMS);
+   deltaT12THM->GetXaxis()->SetRangeUser(deltaT12THMMean-0.3*deltaT12THMRMS,deltaT12THMMean+0.3*deltaT12THMRMS);
+   TF1* f1DeltaTTHM = new TF1("deltaTTHM","gaus(0)",deltaT12THMMean+0.035*deltaT12THMRMS,deltaT12THMMean+0.07*deltaT12THMRMS);
    deltaT12THM->Fit(f1DeltaTTHM,"REL");
    deltaT12THM->SetTitle("");
    deltaT12THM->SetStats(0);
@@ -173,7 +176,6 @@ void tree::Loop(int amp, int Att, char* ND, float left_ch1, float right_ch1)
    c->SaveAs(Form("deltaT12THM_%s.png", fname));
    c->SaveAs(Form("deltaT12THM_%s.C", fname));
    
-   
    TFile* fout = new TFile("myAnalysisFile.root", "recreate");
    f1Int->Write();
    ch1_Int->Write();
@@ -181,4 +183,5 @@ void tree::Loop(int amp, int Att, char* ND, float left_ch1, float right_ch1)
    deltaT12->Write();
    deltaT12THM->Write();
    fout->Close();
+   
 }
