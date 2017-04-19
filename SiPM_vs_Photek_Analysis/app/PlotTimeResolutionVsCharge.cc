@@ -2,6 +2,8 @@
 #include <TGraphErrors.h>
 #include <TCanvas.h>
 #include <TLatex.h>
+#include <TAxis.h>
+#include <TMath.h>
 #include <TF1.h>
 
 const float lumi = 5;
@@ -31,7 +33,24 @@ TString lumiText = "12.92 fb^{-1} (13 TeV)";
 
 int main ( int argc, char** argv )
 {
-
+  int n = 14;
+/*
+  //  ND:         0p5,  0p8,   1p1,   1p4,   1p6,  1p8_01, 1p8_02, 1p8_03, 04, 05, 06 , 07, 08, 09, 10, 11, 12  
+  //  x: charge y: deltaT  
+  float y[]    = {31.92, 36.35, 42.32, 60.91, 87.24, 51.80, 63.08, 62.32, 55.92, 54.85, 56.14, 53.31, 54.37, 54.04, 57.48, 53.79  };
+  float erry[] = { 0.11,  0.12,  0.15,  0.06,  0.09,  1.22,  0.46,  0.51,  0.70,  0.59,  0.64,  0.94,  1.04,  0.83,  1.60,  3.25  };
+  float yTHM[]    = {18.87, 21.72, 30.89, 43.04, 52.34, 64.25, 61.94, 58.13, 48.13, 46.47, 44.92, 42.59, 41.22, 41.60, 41.01, 39.72, 39.17};
+  float erryTHM[] = { 0.06,  0.07,  0.10,  0.05,  0.09,  0.92,  0.37,  0.35,  0.37,  0.39,  0.35, 0.52,  0.44,  0.49, 0.62,  0.68,  0.83};
+  float x[] =    {1.05, 0.89, 0.39, 0.16, 0.09, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 0.11, 0.12};
+  float errx[] = {0.04, 0.06, 0.09, 0.06, 0.04, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00};
+*/
+  //  ND:         1p8_01, 1p8_02, 1p8_03, 04, 05, 06 , 07, 08, 09,  10, 11, 12,  0p8, 0p5  
+  //  x: charge y: deltaT  
+  float yTHM[]    = {64.25, 61.94, 58.13, 48.13, 46.47, 44.92, 42.59, 41.22, 41.60, 41.01, 39.72, 39.17, 21.72, 18.87};
+  float erryTHM[] = { 0.92,  0.37,  0.35,  0.37,  0.39,  0.35,  0.52,  0.44,  0.49,  0.62,  0.68,  0.83,  0.07, 0.06};
+  float x[] =    {0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.89, 1.05};
+  float errx[] = {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.06, 0.04};
+/*
   int n = 6;
   //  ND:         0p5,  0p8,   1p1,   1p4,   1p6,  1p8
   //  x: charge y: deltaT  
@@ -41,7 +60,7 @@ int main ( int argc, char** argv )
   float erryTHM[] = { 0.06,  0.07,  0.10,  0.05,  0.09,  0.09};
   float x[]    = {1.05, 0.89, 0.39, 0.16, 0.09, 0.06};
   float errx[] = {0.04, 0.06, 0.09, 0.06, 0.04, 0.03};
-/*  
+  
   int n = 5;
   //  ND:         0p5,  0p8,   1p1,   1p4,   1p6
   //  x: charge y: deltaT  
@@ -57,7 +76,7 @@ int main ( int argc, char** argv )
   float erry[] = {0.06, 0.06, 0.09, 0.14, 0.20,0.31, 0.48};
   float x[]    = {5.50, 3.06, 1.32, 0.69, 0.32, 0.15, 0.07};
   float errx[] = {0.27, 0.23, 0.16, 0.12, 0.08, 0.06, 0.03};
-*/
+
    TGraphErrors* g = new TGraphErrors(n,x,y,errx,erry);
 
    TCanvas* c = new TCanvas( "c", "c", 2119, 33, 800, 700 );
@@ -71,7 +90,7 @@ int main ( int argc, char** argv )
    c->SetBottomMargin( bottomMargin );
    c->SetFrameBorderMode(0);
    c->SetFrameBorderMode(0);
-   TF1* f1Res = new TF1("f1Res","[0]/x + [1]/sqrt(x) + [2]",x[0],x[n-1]);
+   TF1* f1Res = new TF1("f1Res","[0]/x + [1]/sqrt(x) + [2]",x[0],1.1);
 
    g->SetTitle(";charge [pC];time resolution [ps]");
    //g->GetYaxis()->SetTitle("time resolution [ps]");
@@ -94,7 +113,7 @@ int main ( int argc, char** argv )
    c->SaveAs("deltaT_vs_Charge_SiPM_1x1mm.pdf");
    c->SaveAs("deltaT_vs_Charge_SiPM_1x1mm.png");
    c->SaveAs("deltaT_vs_Charge_SiPM_1x1mm.C");
-  
+*/ 
    TGraphErrors* gr = new TGraphErrors(n,x,yTHM,errx,erryTHM);
 
    TCanvas* cr = new TCanvas( "cr", "cr", 2119, 33, 800, 700 );
@@ -108,18 +127,20 @@ int main ( int argc, char** argv )
    cr->SetBottomMargin( bottomMargin );
    cr->SetFrameBorderMode(0);
    cr->SetFrameBorderMode(0);
+   //gr->GetXaxis()->SetRangeUser(0,1.2);
    TF1* f1ResTHM = new TF1("f1ResTHM","[0]/x + [1]/sqrt(x) + [2]",x[0],x[n-1]);
 
    gr->SetTitle(";charge [pC];time resolution [ps]");
    //gr->GetYaxis()->SetTitle("time resolution [ps]");
-   //gr->GetXaxis()->SetTitle("crharge [pC]");
+   //gr->GetXaxis()->SetTitle("charge [pC]");
    
    gr->Draw("AP");
    gr->SetMarkerStyle(20);
    gr->SetMarkerColor(kBlack);
    
    gr->Fit(f1ResTHM,"RE");
-   
+
+
    TLatex latexr;
    latexr.SetNDC();
    latexr.SetTextAngle(0);
@@ -127,9 +148,10 @@ int main ( int argc, char** argv )
    latexr.SetTextFont(42);
    latexr.SetTextAlign(31); 
    latexr.SetTextSize(0.03);    
-   latexr.DrawLatex(0.87, 0.85, Form("#sigrma_{t} = #fracr{%.2f #pm %.2f [ps]}{Q (pC)} + #frac{%.2f #pm %.2f [ps]}{#sqrt{Q (pC)}} + %.2f #pm %.2f [ps]", f1ResTHM->GetParameter(0), f1ResTHM->GetParError(0), f1ResTHM->GetParameter(1), f1ResTHM->GetParError(1), f1ResTHM->GetParameter(2), f1ResTHM->GetParError(2) ));
+   latexr.DrawLatex(0.87, 0.85, Form("#sigma_{t} = #frac{%.2f #pm %.2f [ps]}{Q (pC)} + #frac{%.2f #pm %.2f [ps]}{#sqrt{Q (pC)}} + %.2f #pm %.2f [ps]", f1ResTHM->GetParameter(0), f1ResTHM->GetParError(0), f1ResTHM->GetParameter(1), f1ResTHM->GetParError(1), f1ResTHM->GetParameter(2), f1ResTHM->GetParError(2) ));
    cr->SaveAs("deltaTTHM_vs_Charge_SiPM_1x1mm.pdf");
    cr->SaveAs("deltaTTHM_vs_Charge_SiPM_1x1mm.png");
    cr->SaveAs("deltaTTHM_vs_Charge_SiPM_1x1mm.C");
+
   return 0;
 }
