@@ -333,10 +333,10 @@ int main (int argc, char **argv)
       pulse1 = new TGraphErrors( GetTGraph( Channel1VoltagesRaw_, ti1_, true ) );
       pulse2 = new TGraphErrors( GetTGraph( Channel2VoltagesRaw_, ti2_, true ) );
       pulse3 = new TGraphErrors( GetTGraph( Channel3VoltagesRaw_, ti3_, true ) );
-      pulse4 = new TGraphErrors( GetTGraph( Channel4VoltagesRaw_, ti4_, false ) );
+      pulse4 = new TGraphErrors( GetTGraph( Channel4VoltagesRaw_, ti4_, true ) );
       
       // if (doFilter) {
-      // 	pulse1 = GetTGraphFilter( Channel1VoltagesRaw_, ti1_, pulseName1 , false);
+      //pulse1 = GetTGraphFilter( Channel1VoltagesRaw_, ti1_, Form("myPulseFilter%d",iEntry) , true);
       // 	pulse2 = GetTGraphFilter( Channel2VoltagesRaw_, ti2_, pulseName2 , false);
       // }
 
@@ -348,16 +348,12 @@ int main (int argc, char **argv)
       //NOTE: if your pulse is negative set _findMin (last input in the FindMaxAbsolute function) flag to <true>
       //std::cout << "=====event " << iEntry+1 << "==========" << std::endl;
       
-      if ( DetectDoublePeak(1024, Channel1VoltagesRaw_, true) )
-	{
-	  //std::cout << "removing event: " << iEntry+1 << std::endl;
-	  continue;
-	}
+	
       //if ( iEntry+1 > 12 ) break;
       int index_min1 = FindMaxAbsolute(1024, Channel1VoltagesRaw_, true); // return index of the max
       int index_min2 = FindMaxAbsolute(1024, Channel2VoltagesRaw_, true); // return index of the max
       int index_min3 = FindMaxAbsolute(1024, Channel3VoltagesRaw_, true); // return index of the max
-      int index_min4 = FindMaxAbsolute(1024, Channel4VoltagesRaw_, false); // return index of the max
+      int index_min4 = FindMaxAbsolute(1024, Channel4VoltagesRaw_, true); // return index of the max
 
       //Compute Amplitude : use units V
       Double_t tmpAmp = 0.0;
@@ -371,10 +367,11 @@ int main (int argc, char **argv)
       pulse4->GetPoint(index_min4, tmpMin, tmpAmp);
       ch4Amp = tmpAmp;  
       
+
       //Get Pulse Integral
       if ( index_min1 != 0 ) ch1Int = GetPulseIntegral( index_min1 , Channel1VoltagesRaw_, ti1_, "part");
       else ch1Int = 0.0;
-      
+
       if ( index_min2 != 0 ) ch2Int = GetPulseIntegral( index_min2 , Channel2VoltagesRaw_,ti2_,  "part");
       else ch2Int = 0.0;
       
@@ -383,24 +380,15 @@ int main (int argc, char **argv)
 
       if ( index_min4 != 0 ) ch4Int = GetPulseIntegral( index_min4 , Channel4VoltagesRaw_, ti4_, "full");
       else ch4Int = 0.0;
-      
-
 
       //----------------
       // Gauss TimeStamp
       //----------------
-      //if( iEntry <9750 && iEntry>9700 )
-      //{
-	//ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 3, 3, pulseName1, false);
-	//ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 3, 3, pulseName2, false); 
-      //std::cout << iEntry << "ch1Time_gausfitroot" << " " << ch1Time_gausfitroot << "ch2Time_gausfitroot" << ch2Time_gausfitroot << std::endl;
-     // }
-     // else
-     // {
-	ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 4, 2, pulseName1, false);
-	ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 3, 3, pulseName2, false);
-	//ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 3, pulseName3, false);
-      //}
+    
+      ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 3, 4, pulseName1, false);
+      ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 3, 4, pulseName2, false);
+      ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 5, pulseName3, false);
+      ch4Time_gausfitroot = GausFit_MeanTime( pulse4, index_min4, 8, 8, pulseName3, false);
      
       //---------------------
       // RisingEdge TimeStamp
@@ -410,36 +398,45 @@ int main (int argc, char **argv)
       float fs3[5];
       float fs4[5];
       
-      RisingEdgeFitTime( pulse1, index_min1, fs1, iEntry, "linearFit_" + pulseName1, false);
+      //RisingEdgeFitTime( pulse1, index_min1, fs1, iEntry, "linearFit_" + pulseName1, false);
       //RisingEdgeFitTime( pulse2, index_min2, fs2, iEntry, "linearFit_" + pulseName2, false);
       //RisingEdgeFitTime( pulse3, index_min3, fs3, iEntry, "linearFit_" + pulseName3, false);
-      RisingEdgeFitTime( pulse4, index_min4, fs4, iEntry, "linearFit_" + pulseName4, false, true);
+      RisingEdgeFitTime( pulse4, index_min4, fs4, iEntry, "linearFit_" + pulseName4, false);
+
       ch1THM = fs1[2];
       ch2THM = fs2[3];
       ch3THM = fs3[3];
-      ch4THM = fs4[3];
+      ch4THM = fs4[2];
        
       //-------------------
       //for debugging the fits visually
       //--------------------
 
 
-      /*if(iEntry+1<=200){
+      
+      if(iEntry+1<=200){
       TCanvas* c = new TCanvas("c","c",600,600);
-      pulse1->GetXaxis()->SetRange(300,400);
+      pulse1->GetXaxis()->SetRangeUser(100,150);
       pulse1->SetMarkerStyle(20);
       pulse1->Draw("AP");
       c->SaveAs(Form("pulse1_event%d.pdf", iEntry+1));
-      pulse2->GetXaxis()->SetRange(300,400);
+      //pulse2->GetXaxis()->SetRange(0,200);
       pulse2->SetMarkerStyle(20);
+      pulse2->GetXaxis()->SetRangeUser(100,150);
       pulse2->Draw("AP");
-      c->SaveAs("pulse2.pdf");
-      }*/
+      c->SaveAs(Form("pulse2_event%d.pdf", iEntry+1));
+      
+      pulse4->SetMarkerStyle(20);
+      pulse4->GetXaxis()->SetRangeUser(100,150);
+      pulse4->Draw("AP");
+      c->SaveAs(Form("pulse4_event%d.pdf", iEntry+1));
+      }
+      
       
       delete pulse1;
-      delete pulse2;
-      delete pulse3;
-      delete pulse4;
+      //delete pulse2;
+      //delete pulse3;
+      //delete pulse4;
       
       treeOut->Fill();
     }
@@ -614,7 +611,7 @@ TGraphErrors* GetTGraphFilter( float* channel, float* time, TString pulseName, b
   
   TF1 *fb = new TF1("fb","gaus(0)", 0.0, 204.6);
   fb->SetParameter(1, 100);
-  float sigma =1.0;
+  float sigma =1.5;
   fb->SetParameter(2, sigma);
   fb->SetParameter(0, 1/(sqrt(3.1415*2.0)*sigma) );
   //eval Gaussian
@@ -654,16 +651,18 @@ TGraphErrors* GetTGraphFilter( float* channel, float* time, TString pulseName, b
 
   if (makePlot) {
     TCanvas* c = new TCanvas("canvas","canvas",800,400) ;         
-    tg2->GetXaxis()->SetLimits(50, 70);
-    tg->GetXaxis()->SetLimits(50, 70);
+    tg2->GetXaxis()->SetRangeUser(300, 700);
+    tg->GetXaxis()->SetRangeUser(300, 700);
     //tg2->Fit("fb","","", 0.0, 204.6 );
     tg2->SetMarkerSize(0.5);
     tg->SetMarkerSize(0.5);
     tg2->SetMarkerStyle(20);
     tg->SetMarkerStyle(20);
     tg2->Draw("AP");
+    tg2->GetYaxis()->SetRangeUser(0, 0.5);
     tg2->SetMarkerColor(kBlue);
     tg->Draw("sameP");
+    tg->GetYaxis()->SetRangeUser(0, 0.5);
     c->SaveAs(pulseName + "GausPulse.pdf");
   }
   return tg;
@@ -770,25 +769,24 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstam
   for ( int i = 1; i < 100; i++ )
     {
       pulse->GetPoint(index_min-i, x_low, y);
-      // std::cout<<"BNNNBBB  "<<event<<" "<<ymax<<" "<<x_low<<" "<<y<<std::endl;
       if ( y < 0.2*ymax ) break;
-      // if ( y < 0.2*ymax ) break;
-   }
+    }
 
-  for ( int i = 1; i < 100; i++ )
+  for ( int i = 1; i < 200; i++ )
     {
       pulse->GetPoint(index_min-i, x_high, y);
-      if ( y < 0.999*ymax ) break;
+      if ( y < 0.7*ymax ) break;
     }
 
 
   double ymax_minus1;
   pulse->GetPoint(index_min, xdummy, ymax_minus1);
-  
-  if( ymax_minus1 > 0.95*ymax ) pulse->GetPoint(index_min-1, x_high, dummy);
+
+  /*
+  if( ymax_minus1 > 0.8*ymax ) pulse->GetPoint(index_min-1, x_high, dummy);
   else pulse->GetPoint(index_min, x_high, ymax);
   pulse->GetPoint(index_min, x_high, ymax);
-  
+  */
   // if(x_low_1<x_low) x_low = x_low_1;
   // if(x_high_1>x_high) x_high = x_high_1;
 
@@ -844,3 +842,5 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstam
   
   delete flinear;
 };
+
+
