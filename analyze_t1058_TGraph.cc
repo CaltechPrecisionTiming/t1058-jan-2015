@@ -385,8 +385,8 @@ int main (int argc, char **argv)
       // Gauss TimeStamp
       //----------------
     
-      ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 3, 4, pulseName1, false);
-      ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 3, 4, pulseName2, false);
+      ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 3, 3, pulseName1, false);
+      ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 3, 3, pulseName2, false);
       ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 5, pulseName3, false);
       ch4Time_gausfitroot = GausFit_MeanTime( pulse4, index_min4, 8, 8, pulseName3, false);
      
@@ -406,7 +406,7 @@ int main (int argc, char **argv)
       ch1THM = fs1[2];
       ch2THM = fs2[3];
       ch3THM = fs3[3];
-      ch4THM = fs4[2];
+      ch4THM = fs4[0];
        
       //-------------------
       //for debugging the fits visually
@@ -416,18 +416,18 @@ int main (int argc, char **argv)
       
       if(iEntry+1<=200){
       TCanvas* c = new TCanvas("c","c",600,600);
-      pulse1->GetXaxis()->SetRangeUser(100,150);
+      pulse1->GetXaxis()->SetRangeUser(0,200);
       pulse1->SetMarkerStyle(20);
       pulse1->Draw("AP");
       c->SaveAs(Form("pulse1_event%d.pdf", iEntry+1));
       //pulse2->GetXaxis()->SetRange(0,200);
       pulse2->SetMarkerStyle(20);
-      pulse2->GetXaxis()->SetRangeUser(100,150);
+      pulse2->GetXaxis()->SetRangeUser(0,200);
       pulse2->Draw("AP");
       c->SaveAs(Form("pulse2_event%d.pdf", iEntry+1));
       
       pulse4->SetMarkerStyle(20);
-      pulse4->GetXaxis()->SetRangeUser(100,150);
+      pulse4->GetXaxis()->SetRangeUser(0,200);
       pulse4->Draw("AP");
       c->SaveAs(Form("pulse4_event%d.pdf", iEntry+1));
       }
@@ -769,13 +769,13 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstam
   for ( int i = 1; i < 100; i++ )
     {
       pulse->GetPoint(index_min-i, x_low, y);
-      if ( y < 0.2*ymax ) break;
+      if ( y < 0.1*ymax ) break;
     }
 
   for ( int i = 1; i < 200; i++ )
     {
       pulse->GetPoint(index_min-i, x_high, y);
-      if ( y < 0.7*ymax ) break;
+      if ( y < 0.4*ymax ) break;
     }
 
 
@@ -807,16 +807,6 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstam
     {
       if ( yy[i] > max ) max = yy[i];
     }
-  //std::cout << "max: " << max << std::endl;
-
-  /*if( max < 10 || index_min < 0 || index_min > 1023 )
-    {
-      std::cout << "DEB: skipping event--> " << event << std::endl;
-      return;
-    }
-  */
-
-  // if(std::abs(x_high-x_low) < 0.8) {x_low -= 0.1; x_high += 0.2;}
   
   pulse->Fit("flinear","Q","", x_low, x_high );
   double slope = flinear->GetParameter(0);
