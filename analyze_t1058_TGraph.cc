@@ -35,7 +35,7 @@ float GetPulseIntegral(int peak, float *a, float *t, std::string option);
 float GetBaseline(TGraphErrors * pulse, int i_low, int i_high, TString fname );
 TGraphErrors GetTGraph(  float* channel, float* time, bool invert = false );
 int FindRealMin( int n, float *a);
-void RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, float* tstamp, int event, TString fname, bool makePlot, bool trigger = false );
+void RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float lowFraction, const float highFraction, float* tstamp, int event, TString fname, bool makePlot, bool trigger = false );
 
 float LED( TH1F * pulse, double threshold, int nsamples, int splineBinFactor );
 float LinearFit_Baseline(TH1F * pulse, const int index_min, const int range);
@@ -340,6 +340,8 @@ int main (int argc, char **argv)
       // 	pulse2 = GetTGraphFilter( Channel2VoltagesRaw_, ti2_, pulseName2 , false);
       // }
 
+      //pulse3 = GetTGraphFilter( Channel3VoltagesRaw_, ti3_, Form("myPulse3Filter%d",iEntry) , false);
+      
       //------------------------------------------------------------------
       //Getting index to maximum or minimum dependending on signal polarity
       //------------------------------------------------------------------
@@ -400,13 +402,13 @@ int main (int argc, char **argv)
       
       //RisingEdgeFitTime( pulse1, index_min1, fs1, iEntry, "linearFit_" + pulseName1, false);
       //RisingEdgeFitTime( pulse2, index_min2, fs2, iEntry, "linearFit_" + pulseName2, false);
-      //RisingEdgeFitTime( pulse3, index_min3, fs3, iEntry, "linearFit_" + pulseName3, false);
-      RisingEdgeFitTime( pulse4, index_min4, fs4, iEntry, "linearFit_" + pulseName4, false);
+      //RisingEdgeFitTime( pulse3, index_min3, 0.15, 0.4, fs3, iEntry, "linearFit_" + pulseName3, false, false);
+      RisingEdgeFitTime( pulse4, index_min4, 0.1, 0.4, fs4, iEntry, "linearFit_" + pulseName4, false);
 
       ch1THM = fs1[2];
       ch2THM = fs2[3];
       ch3THM = fs3[3];
-      ch4THM = fs4[0];
+      ch4THM = fs4[1];
        
       //-------------------
       //for debugging the fits visually
@@ -414,7 +416,7 @@ int main (int argc, char **argv)
 
 
       
-      if(iEntry+1<=200){
+      if(iEntry+1<=0){
       TCanvas* c = new TCanvas("c","c",600,600);
       pulse1->GetXaxis()->SetRangeUser(0,200);
       pulse1->SetMarkerStyle(20);
@@ -425,6 +427,11 @@ int main (int argc, char **argv)
       pulse2->GetXaxis()->SetRangeUser(0,200);
       pulse2->Draw("AP");
       c->SaveAs(Form("pulse2_event%d.pdf", iEntry+1));
+      
+      pulse3->SetMarkerStyle(20);
+      pulse3->GetXaxis()->SetRangeUser(110,130);
+      pulse3->Draw("AP");
+      c->SaveAs(Form("pulse3_event%d.pdf", iEntry+1));
       
       pulse4->SetMarkerStyle(20);
       pulse4->GetXaxis()->SetRangeUser(0,200);
@@ -511,14 +518,10 @@ int FindMaxAbsolute( int n, float *a, bool _findMin ) {
     {
       float xmin = a[5];
       for  (int i = 5; i < n-10; i++) {
-	// if (xmin > a[i] && a[i+1] < 0.5*a[i] && a[i] < -40. )  
-	if (xmin > a[i] && a[i+1] < 0.3*a[i] && a[i] < -10. / 4096. )  
+	if ( a[i] < xmin  && a[i+1] > 0.98*a[i] && a[i] < -10. / 4096. )  
 	  {
-	    //std::cout << i << " " << a[i] << std::endl;
 	    xmin = a[i];
 	    loc = i;
-	    //if ( a[i+5]>a[i] && a[i+10]>a[i+5] ) {
-	    //break;
 	  }
       }
     }
@@ -532,8 +535,6 @@ int FindMaxAbsolute( int n, float *a, bool _findMin ) {
 	      //std::cout << i << " " << a[i] << std::endl;
 	      xmax = a[i];
 	      loc = i;
-	      //if ( a[i+5]>a[i] && a[i+10]>a[i+5] ) {
-	      //break;
 	    }
 	}
     }
@@ -611,7 +612,7 @@ TGraphErrors* GetTGraphFilter( float* channel, float* time, TString pulseName, b
   
   TF1 *fb = new TF1("fb","gaus(0)", 0.0, 204.6);
   fb->SetParameter(1, 100);
-  float sigma =1.5;
+  float sigma =0.8;
   fb->SetParameter(2, sigma);
   fb->SetParameter(0, 1/(sqrt(3.1415*2.0)*sigma) );
   //eval Gaussian
@@ -659,7 +660,7 @@ TGraphErrors* GetTGraphFilter( float* channel, float* time, TString pulseName, b
     tg2->SetMarkerStyle(20);
     tg->SetMarkerStyle(20);
     tg2->Draw("AP");
-    tg2->GetYaxis()->SetRangeUser(0, 0.5);
+    tg2->GetYaxis()->SetRangeUser(0, 0.2);
     tg2->SetMarkerColor(kBlue);
     tg->Draw("sameP");
     tg->GetYaxis()->SetRangeUser(0, 0.5);
@@ -761,34 +762,22 @@ float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index
   return timepeak;
 }
 
-void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstamp, int event, TString fname, bool makePlot, bool trigger )
+void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, const float lowFraction, const float highFraction, float* tstamp, int event, TString fname, bool makePlot, bool trigger )
 {
   double x_low, x_high, xdummy, y, dummy;
   double ymax;
   pulse->GetPoint(index_min, x_low, ymax);
-  for ( int i = 1; i < 100; i++ )
+  for ( int i = 1; i < 500; i++ )
     {
       pulse->GetPoint(index_min-i, x_low, y);
-      if ( y < 0.1*ymax ) break;
+      if ( y < lowFraction*ymax ) break;
     }
 
-  for ( int i = 1; i < 200; i++ )
+  for ( int i = 1; i < 500; i++ )
     {
       pulse->GetPoint(index_min-i, x_high, y);
-      if ( y < 0.4*ymax ) break;
+      if ( y < highFraction*ymax ) break;
     }
-
-
-  double ymax_minus1;
-  pulse->GetPoint(index_min, xdummy, ymax_minus1);
-
-  /*
-  if( ymax_minus1 > 0.8*ymax ) pulse->GetPoint(index_min-1, x_high, dummy);
-  else pulse->GetPoint(index_min, x_high, ymax);
-  pulse->GetPoint(index_min, x_high, ymax);
-  */
-  // if(x_low_1<x_low) x_low = x_low_1;
-  // if(x_high_1>x_high) x_high = x_high_1;
 
   //----------------------------------------------------------------
   //The following is the best configuration for picsec laser trigger
@@ -799,15 +788,8 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstam
       pulse->GetPoint(index_min-2, x_high, y);
       pulse->GetPoint(index_min, dummy, y);
     }
-  TF1* flinear = new TF1("flinear","[0]*x+[1]", x_low, x_high );
-  float max = -9999;
-  double* yy = pulse->GetY();
-  
-  for ( int i = 0; i < 1024; i++ )
-    {
-      if ( yy[i] > max ) max = yy[i];
-    }
-  
+
+  TF1* flinear = new TF1("flinear","[0]*x+[1]", x_low, x_high );  
   pulse->Fit("flinear","Q","", x_low, x_high );
   double slope = flinear->GetParameter(0);
   double b     = flinear->GetParameter(1);
@@ -817,7 +799,8 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstam
       std::cout << "make plot" << std::endl;
       TCanvas* c = new TCanvas("canvas","canvas",800,400) ;
       pulse->GetXaxis()->SetLimits(x_low-10, x_high+10);
-      pulse->SetMarkerSize(0.3);
+      //pulse->GetXaxis()->SetLimits(x_low, x_high);
+      pulse->SetMarkerSize(0.5);
       pulse->SetMarkerStyle(20);
       pulse->Draw("AP");
       c->SaveAs(fname+"LinearFit.pdf");
@@ -827,7 +810,7 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstam
   //std::cout << "----" << tstamp[0]  << std::endl;
   tstamp[1] = (0.15*y-b)/slope;
   tstamp[2] = (0.30*y-b)/slope;
-  tstamp[3] = (0.40*y-b)/slope;//Best Configuration for picsec laser trigger
+  tstamp[3] = (0.4*y-b)/slope;//Best Configuration for picsec laser trigger
   tstamp[4] = (0.60*y-b)/slope;
   
   delete flinear;
