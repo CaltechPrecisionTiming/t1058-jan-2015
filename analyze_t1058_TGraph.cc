@@ -31,7 +31,7 @@ int FindMaxAbsolute( int n, float *a, bool _findMin = false );
 bool DetectDoublePeak( int n, float *a, bool _findMin = false );
 
 TGraphErrors* GetTGraphFilter( float* channel, float* time, TString pulseName, bool makePlot );
-float GetPulseIntegral(int peak, float *a, float *t, std::string option);
+float GetPulseIntegral(int peak, float *a, float *t, std::string option, int peakmin, int peakmax);
 float GetBaseline(TGraphErrors * pulse, int i_low, int i_high, TString fname );
 TGraphErrors GetTGraph(  float* channel, float* time, bool invert = false );
 int FindRealMin( int n, float *a);
@@ -371,16 +371,16 @@ int main (int argc, char **argv)
       
 
       //Get Pulse Integral
-      if ( index_min1 != 0 ) ch1Int = GetPulseIntegral( index_min1 , Channel1VoltagesRaw_, ti1_, "part");
+      if ( index_min1 != 0 ) ch1Int = GetPulseIntegral( index_min1 , Channel1VoltagesRaw_, ti1_, "part", 20, 15);
       else ch1Int = 0.0;
 
-      if ( index_min2 != 0 ) ch2Int = GetPulseIntegral( index_min2 , Channel2VoltagesRaw_,ti2_,  "part");
+      if ( index_min2 != 0 ) ch2Int = GetPulseIntegral( index_min2 , Channel2VoltagesRaw_,ti2_,  "part", 5, 5);
       else ch2Int = 0.0;
       
-      if ( index_min3 != 0 ) ch3Int = GetPulseIntegral( index_min3 , Channel3VoltagesRaw_, ti3_,  "full");
+      if ( index_min3 != 0 ) ch3Int = GetPulseIntegral( index_min3 , Channel3VoltagesRaw_, ti3_,  "full", 25, 75);
       else ch3Int = 0.0;
 
-      if ( index_min4 != 0 ) ch4Int = GetPulseIntegral( index_min4 , Channel4VoltagesRaw_, ti4_, "full");
+      if ( index_min4 != 0 ) ch4Int = GetPulseIntegral( index_min4 , Channel4VoltagesRaw_, ti4_, "full",35, 75);
       else ch4Int = 0.0;
 
       //----------------
@@ -518,7 +518,8 @@ int FindMaxAbsolute( int n, float *a, bool _findMin ) {
     {
       float xmin = a[5];
       for  (int i = 5; i < n-10; i++) {
-	if ( a[i] < xmin  && a[i+1] > 0.98*a[i] && a[i] < -10. / 4096. )  
+	  // to 2mV cut
+	  if ( a[i] < xmin  && a[i+1] > 0.98*a[i] && a[i] < -10. / 4096. )  
 	  {
 	    xmin = a[i];
 	    loc = i;
@@ -530,7 +531,8 @@ int FindMaxAbsolute( int n, float *a, bool _findMin ) {
       float xmax = a[5];
       for  ( int i = 5; i < n-10; i++ )
 	{
-	  if ( a[i] > xmax && a[i+1] < 0.9*a[i] && a[i] > 40. / 4096. )  
+	  // to 2 mV cut
+	  if ( a[i] > xmax && a[i+1] < 0.9*a[i] && a[i] > 10. / 4096. )  
 	    {
 	      //std::cout << i << " " << a[i] << std::endl;
 	      xmax = a[i];
@@ -567,7 +569,7 @@ float GetBaseline(TGraphErrors * pulse, int i_low, int i_high, TString fname )
 }
 
 
-float GetPulseIntegral(int peak, float *a, float *t, std::string option) 
+float GetPulseIntegral(int peak, float *a, float *t, std::string option, int peakmin, int peakmax) 
 {
   float integral = 0.;
 
@@ -579,7 +581,7 @@ float GetPulseIntegral(int peak, float *a, float *t, std::string option)
   else {
     //for (int i=peak-4; i < peak+4; i++) {
     //}
-    for (int i=peak-4; i < peak+4; i++) {
+    for (int i=peak-peakmin; i < peak+peakmax; i++) {
     //for (int i = 389; i < 397; i++){
       //it makes more sense to do the integral around the peak rather than a fixed window
       //integral += a[i] * 0.2 * 1e-9 * (1.0/50.0) * 1e12; //in units of pC, for 50Ohm termination
