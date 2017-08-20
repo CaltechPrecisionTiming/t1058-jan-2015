@@ -28,6 +28,7 @@ enum PulseQuality {
 bool doFilter = false;
 
 int FindMaxAbsolute( int n, float *a, bool _findMin = false );
+int FindFirstMaximum( int n, float *a, bool _findMin = false );
 bool DetectDoublePeak( int n, float *a, bool _findMin = false );
 
 TGraphErrors* GetTGraphFilter( float* channel, float* time, TString pulseName, bool makePlot );
@@ -35,7 +36,7 @@ float GetPulseIntegral(int peak, float *a, float *t, std::string option, int pea
 float GetBaseline(TGraphErrors * pulse, int i_low, int i_high, TString fname );
 TGraphErrors GetTGraph(  float* channel, float* time, bool invert = false );
 int FindRealMin( int n, float *a);
-void RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float lowFraction, const float highFraction, float* tstamp, int event, TString fname, bool makePlot, bool trigger = false );
+float RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float lowFraction, const float highFraction, float* tstamp, int event, TString fname, bool makePlot, bool trigger = false);
 
 float LED( TH1F * pulse, double threshold, int nsamples, int splineBinFactor );
 float LinearFit_Baseline(TH1F * pulse, const int index_min, const int range);
@@ -330,7 +331,7 @@ int main (int argc, char **argv)
       //----------------------------------------------------------------------------------------
       //Create baseline corrected TGraphs (make sure you invert your pulse if they are negative)
       //----------------------------------------------------------------------------------------
-      pulse1 = new TGraphErrors( GetTGraph( Channel1VoltagesRaw_, ti1_, true ) );
+      pulse1 = new TGraphErrors( GetTGraph( Channel1VoltagesRaw_, ti1_, false ) );
       pulse2 = new TGraphErrors( GetTGraph( Channel2VoltagesRaw_, ti2_, true ) );
       pulse3 = new TGraphErrors( GetTGraph( Channel3VoltagesRaw_, ti3_, true ) );
       pulse4 = new TGraphErrors( GetTGraph( Channel4VoltagesRaw_, ti4_, true ) );
@@ -342,21 +343,21 @@ int main (int argc, char **argv)
 
       //pulse3 = GetTGraphFilter( Channel3VoltagesRaw_, ti3_, Form("myPulse3Filter%d",iEntry) , false);
       
+
+      
       //------------------------------------------------------------------
       //Getting index to maximum or minimum dependending on signal polarity
       //------------------------------------------------------------------
       //Find the absolute maximum. This is only used as a rough determination to decide if we'll use the early time samples
       //or the late time samples to do the baseline fit
       //NOTE: if your pulse is negative set _findMin (last input in the FindMaxAbsolute function) flag to <true>
-      //std::cout << "=====event " << iEntry+1 << "==========" << std::endl;
-      
-	
-      //if ( iEntry+1 > 12 ) break;
-      int index_min1 = FindMaxAbsolute(1024, Channel1VoltagesRaw_, true); // return index of the max
+      //std::cout << "=====event " << iEntry+1 << "==========" << std::endl;	
+      int index_min1 = FindMaxAbsolute(1024, Channel1VoltagesRaw_, false); // return index of the max
       int index_min2 = FindMaxAbsolute(1024, Channel2VoltagesRaw_, true); // return index of the max
       int index_min3 = FindMaxAbsolute(1024, Channel3VoltagesRaw_, true); // return index of the max
       int index_min4 = FindMaxAbsolute(1024, Channel4VoltagesRaw_, true); // return index of the max
 
+      //std::cout << "event: " << iEntry << " --> " << ti3_[index_min3] << " " << Channel3VoltagesRaw_[index_min3] << std::endl;
       //Compute Amplitude : use units V
       Double_t tmpAmp = 0.0;
       Double_t tmpMin = 0.0;
@@ -369,7 +370,6 @@ int main (int argc, char **argv)
       pulse4->GetPoint(index_min4, tmpMin, tmpAmp);
       ch4Amp = tmpAmp;  
       
-
       //Get Pulse Integral
       if ( index_min1 != 0 ) ch1Int = GetPulseIntegral( index_min1 , Channel1VoltagesRaw_, ti1_, "part", 20, 15);
       else ch1Int = 0.0;
@@ -377,7 +377,7 @@ int main (int argc, char **argv)
       if ( index_min2 != 0 ) ch2Int = GetPulseIntegral( index_min2 , Channel2VoltagesRaw_,ti2_,  "part", 5, 5);
       else ch2Int = 0.0;
       
-      if ( index_min3 != 0 ) ch3Int = GetPulseIntegral( index_min3 , Channel3VoltagesRaw_, ti3_,  "full", 25, 75);
+      if ( index_min3 != 0 ) ch3Int = GetPulseIntegral( index_min3 , Channel3VoltagesRaw_, ti3_,  "full", 6, 10);
       else ch3Int = 0.0;
 
       if ( index_min4 != 0 ) ch4Int = GetPulseIntegral( index_min4 , Channel4VoltagesRaw_, ti4_, "full",35, 75);
@@ -387,11 +387,11 @@ int main (int argc, char **argv)
       // Gauss TimeStamp
       //----------------
     
-      ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 3, 3, pulseName1, false);
-      ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 3, 3, pulseName2, false);
-      ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 5, pulseName3, false);
-      ch4Time_gausfitroot = GausFit_MeanTime( pulse4, index_min4, 8, 8, pulseName3, false);
-     
+      ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 4, 3, pulseName1, false);
+      ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 2, 3, pulseName2, false);
+      // ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 3, pulseName3, false);
+      // ch4Time_gausfitroot = GausFit_MeanTime( pulse4, index_min4, 8, 8, pulseName3, false);
+      
       //---------------------
       // RisingEdge TimeStamp
       //---------------------
@@ -400,36 +400,39 @@ int main (int argc, char **argv)
       float fs3[5];
       float fs4[5];
       
-      //RisingEdgeFitTime( pulse1, index_min1, fs1, iEntry, "linearFit_" + pulseName1, false);
-      //RisingEdgeFitTime( pulse2, index_min2, fs2, iEntry, "linearFit_" + pulseName2, false);
-      //RisingEdgeFitTime( pulse3, index_min3, 0.15, 0.4, fs3, iEntry, "linearFit_" + pulseName3, false, false);
-      RisingEdgeFitTime( pulse4, index_min4, 0.1, 0.4, fs4, iEntry, "linearFit_" + pulseName4, false);
+
+      ch1Risetime = RisingEdgeFitTime( pulse1, index_min1, 0.15, 0.95, fs1, iEntry, "linearFit_" + pulseName1, false, true);
+      ch2Risetime = RisingEdgeFitTime( pulse2, index_min2, 0.15, 0.85, fs2, iEntry, "linearFit_" + pulseName2, false, false);
+      //ch3Risetime = RisingEdgeFitTime( pulse3, index_min3, 0.1, 0.8, fs3, iEntry, "linearFit_" + pulseName3, false, false);
+      //ch4Risetime = RisingEdgeFitTime( pulse4, index_min4, 0.1, 0.4, fs4, iEntry, "linearFit_" + pulseName4, false);
 
       ch1THM = fs1[2];
-      ch2THM = fs2[3];
+      ch2THM = fs2[2];
       ch3THM = fs3[3];
       ch4THM = fs4[1];
-       
+      
       //-------------------
       //for debugging the fits visually
       //--------------------
 
-
+     
       
-      if(iEntry+1<=0){
+      if(iEntry+1<=20){
       TCanvas* c = new TCanvas("c","c",600,600);
       pulse1->GetXaxis()->SetRangeUser(0,200);
       pulse1->SetMarkerStyle(20);
       pulse1->Draw("AP");
       c->SaveAs(Form("pulse1_event%d.pdf", iEntry+1));
+
       //pulse2->GetXaxis()->SetRange(0,200);
       pulse2->SetMarkerStyle(20);
-      pulse2->GetXaxis()->SetRangeUser(0,200);
+      pulse2->GetXaxis()->SetRangeUser(60,100);
       pulse2->Draw("AP");
       c->SaveAs(Form("pulse2_event%d.pdf", iEntry+1));
       
       pulse3->SetMarkerStyle(20);
-      pulse3->GetXaxis()->SetRangeUser(110,130);
+      pulse3->GetXaxis()->SetRangeUser(60,75);
+      // pulse3->GetYaxis()->SetRangeUser(-0.03,0.04);
       pulse3->Draw("AP");
       c->SaveAs(Form("pulse3_event%d.pdf", iEntry+1));
       
@@ -439,11 +442,12 @@ int main (int argc, char **argv)
       c->SaveAs(Form("pulse4_event%d.pdf", iEntry+1));
       }
       
+      // if(iEntry+1>10000) break;
       
       delete pulse1;
-      //delete pulse2;
-      //delete pulse3;
-      //delete pulse4;
+      delete pulse2;
+      delete pulse3;
+      delete pulse4;
       
       treeOut->Fill();
     }
@@ -519,7 +523,7 @@ int FindMaxAbsolute( int n, float *a, bool _findMin ) {
       float xmin = a[5];
       for  (int i = 5; i < n-10; i++) {
 	  // to 2mV cut
-	  if ( a[i] < xmin  && a[i+1] > 0.98*a[i] && a[i] < -10. / 4096. )  
+	  if ( a[i] < xmin  && a[i+1] > 0.98*a[i] && a[i] < -0.002 )  
 	  {
 	    xmin = a[i];
 	    loc = i;
@@ -532,11 +536,43 @@ int FindMaxAbsolute( int n, float *a, bool _findMin ) {
       for  ( int i = 5; i < n-10; i++ )
 	{
 	  // to 2 mV cut
-	  if ( a[i] > xmax && a[i+1] < 0.9*a[i] && a[i] > 10. / 4096. )  
+	  if ( a[i] > xmax && a[i+1] < 0.9*a[i] && a[i] > 0.002 )  
 	    {
 	      //std::cout << i << " " << a[i] << std::endl;
 	      xmax = a[i];
 	      loc = i;
+	    }
+	}
+    }
+  return loc;
+}
+
+int FindFirstMaximum( int n, float *a, bool _findMin ) {
+  
+  if (n <= 0 || !a) return -1;
+  int loc = 0;
+  if ( _findMin )
+    {
+      float xmin = a[5];
+      for  (int i = 5; i < n-10; i++) {
+	  // to 2mV cut
+	  if ( a[i] < xmin  && a[i+1] > 0.98*a[i] && a[i] < -0.02 )  
+	  {
+	    //std::cout << i << std::endl;
+	    return i;
+	  }
+      }
+    }
+  else
+    {
+      float xmax = a[5];
+      for  ( int i = 5; i < n-10; i++ )
+	{
+	  // to 2 mV cut
+	  if ( a[i] > xmax && a[i+1] < 0.9*a[i] && a[i] > 0.02 )  
+	    {
+	      //std::cout << i << " " << a[i] << std::endl;
+              return i;
 	    }
 	}
     }
@@ -744,8 +780,16 @@ float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index
   pulse->GetPoint(index_min-index_first, x_low, y);
   pulse->GetPoint(index_min+index_last, x_high, y);
   
-  TF1* fpeak = new TF1("fpeak","gaus", x_low, x_high);
-  pulse->Fit("fpeak","Q","", x_low, x_high);
+  double x_dummy, ymax, ymax_minus1;
+  pulse->GetPoint(index_min, x_dummy, ymax);
+  pulse->GetPoint(index_min-1, x_dummy, ymax_minus1);
+  if (ymax_minus1 > ymax)
+    {
+    pulse->GetPoint(index_min-index_first-1, x_low, y);
+    }
+
+  TF1* fpeak = new TF1("fpeak","gaus", x_low-.1, x_high+.1);
+  pulse->Fit("fpeak","Q","", x_low-.1, x_high+.1);
   float timepeak = fpeak->GetParameter(1);
   if ( makePlot )
     {
@@ -764,11 +808,12 @@ float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index
   return timepeak;
 }
 
-void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, const float lowFraction, const float highFraction, float* tstamp, int event, TString fname, bool makePlot, bool trigger )
+float RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float lowFraction, const float highFraction, float* tstamp, int event, TString fname, bool makePlot, bool trigger)
 {
   double x_low, x_high, xdummy, y, dummy;
   double ymax;
   pulse->GetPoint(index_min, x_low, ymax);
+  //std::cout << x_low << " " << ymax << std::endl;
   for ( int i = 1; i < 500; i++ )
     {
       pulse->GetPoint(index_min-i, x_low, y);
@@ -783,22 +828,25 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, const float 
 
   //----------------------------------------------------------------
   //The following is the best configuration for picsec laser trigger
+  //Fit from 2 samples left of the peak location to 9 samples left
+  //of peak location. That gives time resolution of 13.0ps from trigger
+  //signal to Photek signal (using gaus peak)
   //----------------------------------------------------------------
   if (trigger)
     {
-      pulse->GetPoint(index_min-8, x_low, y);
+      pulse->GetPoint(index_min-9, x_low, y);
       pulse->GetPoint(index_min-2, x_high, y);
       pulse->GetPoint(index_min, dummy, y);
     }
-
+ 
   TF1* flinear = new TF1("flinear","[0]*x+[1]", x_low, x_high );  
-  pulse->Fit("flinear","Q","", x_low, x_high );
+  pulse->Fit(flinear,"Q","", x_low, x_high );
   double slope = flinear->GetParameter(0);
   double b     = flinear->GetParameter(1);
   
   if ( makePlot )
     {
-      std::cout << "make plot" << std::endl;
+      //std::cout << "make plot" << std::endl;
       TCanvas* c = new TCanvas("canvas","canvas",800,400) ;
       pulse->GetXaxis()->SetLimits(x_low-10, x_high+10);
       //pulse->GetXaxis()->SetLimits(x_low, x_high);
@@ -816,6 +864,7 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, const float 
   tstamp[4] = (0.60*y-b)/slope;
   
   delete flinear;
+  return (float)(((0.9*ymax-b)/slope) - ((0.1*ymax-b)/slope));
 };
 
 
