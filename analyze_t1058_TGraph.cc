@@ -389,8 +389,8 @@ int main (int argc, char **argv)
     
       ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 4, 3, pulseName1, false);
       ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 2, 3, pulseName2, false);
-      // ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 3, pulseName3, false);
-      // ch4Time_gausfitroot = GausFit_MeanTime( pulse4, index_min4, 8, 8, pulseName3, false);
+      ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 3, pulseName3, false);
+      ch4Time_gausfitroot = GausFit_MeanTime( pulse4, index_min4, 8, 8, pulseName3, false);
       
       //---------------------
       // RisingEdge TimeStamp
@@ -403,8 +403,8 @@ int main (int argc, char **argv)
 
       ch1Risetime = RisingEdgeFitTime( pulse1, index_min1, 0.15, 0.95, fs1, iEntry, "linearFit_" + pulseName1, false, true);
       ch2Risetime = RisingEdgeFitTime( pulse2, index_min2, 0.15, 0.85, fs2, iEntry, "linearFit_" + pulseName2, false, false);
-      //ch3Risetime = RisingEdgeFitTime( pulse3, index_min3, 0.1, 0.8, fs3, iEntry, "linearFit_" + pulseName3, false, false);
-      //ch4Risetime = RisingEdgeFitTime( pulse4, index_min4, 0.1, 0.4, fs4, iEntry, "linearFit_" + pulseName4, false);
+      ch3Risetime = RisingEdgeFitTime( pulse3, index_min3, 0.1, 0.8, fs3, iEntry, "linearFit_" + pulseName3, false, false);
+      ch4Risetime = RisingEdgeFitTime( pulse4, index_min4, 0.1, 0.4, fs4, iEntry, "linearFit_" + pulseName4, false);
 
       ch1THM = fs1[2];
       ch2THM = fs2[2];
