@@ -36,7 +36,7 @@ float GetPulseIntegral(int peak, float *a, float *t, std::string option, int pea
 float GetBaseline(TGraphErrors * pulse, int i_low, int i_high, TString fname );
 TGraphErrors GetTGraph(  float* channel, float* time, bool invert = false );
 int FindRealMin( int n, float *a);
-float RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float lowFraction, const float highFraction, float* tstamp, int event, TString fname, bool makePlot, bool trigger = false);
+float RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float lowFraction, const float highFraction, float* tstamp, int event, TString fname, bool makePlot, bool trigger = false, bool sipm = false);
 
 float LED( TH1F * pulse, double threshold, int nsamples, int splineBinFactor );
 float LinearFit_Baseline(TH1F * pulse, const int index_min, const int range);
@@ -388,9 +388,9 @@ int main (int argc, char **argv)
       //----------------
     
       ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 4, 3, pulseName1, false);
-      ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 2, 3, pulseName2, false);
+      //ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 2, 3, pulseName2, false);
       ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 3, pulseName3, false);
-      ch4Time_gausfitroot = GausFit_MeanTime( pulse4, index_min4, 8, 8, pulseName3, false);
+      //ch4Time_gausfitroot = GausFit_MeanTime( pulse4, index_min4, 8, 8, pulseName3, false);
       
       //---------------------
       // RisingEdge TimeStamp
@@ -401,10 +401,10 @@ int main (int argc, char **argv)
       float fs4[5];
       
 
-      ch1Risetime = RisingEdgeFitTime( pulse1, index_min1, 0.15, 0.95, fs1, iEntry, "linearFit_" + pulseName1, false, true);
-      ch2Risetime = RisingEdgeFitTime( pulse2, index_min2, 0.15, 0.85, fs2, iEntry, "linearFit_" + pulseName2, false, false);
-      ch3Risetime = RisingEdgeFitTime( pulse3, index_min3, 0.1, 0.8, fs3, iEntry, "linearFit_" + pulseName3, false, false);
-      ch4Risetime = RisingEdgeFitTime( pulse4, index_min4, 0.1, 0.4, fs4, iEntry, "linearFit_" + pulseName4, false);
+      ch1Risetime = RisingEdgeFitTime( pulse1, index_min1, 0.15, 0.95, fs1, iEntry, "linearFit_" + pulseName1, false, true, false);
+      //ch2Risetime = RisingEdgeFitTime( pulse2, index_min2, 0.15, 0.85, fs2, iEntry, "linearFit_" + pulseName2, false, false);
+      ch3Risetime = RisingEdgeFitTime( pulse3, index_min3, 0.2, 0.8, fs3, iEntry, "linearFit_" + pulseName3, false, false, true);
+      //ch4Risetime = RisingEdgeFitTime( pulse4, index_min4, 0.1, 0.4, fs4, iEntry, "linearFit_" + pulseName4, false);
 
       ch1THM = fs1[2];
       ch2THM = fs2[2];
@@ -426,13 +426,12 @@ int main (int argc, char **argv)
 
       //pulse2->GetXaxis()->SetRange(0,200);
       pulse2->SetMarkerStyle(20);
-      pulse2->GetXaxis()->SetRangeUser(60,100);
+      pulse2->GetXaxis()->SetRangeUser(index_min2-7,index_min2+10);
       pulse2->Draw("AP");
       c->SaveAs(Form("pulse2_event%d.pdf", iEntry+1));
       
       pulse3->SetMarkerStyle(20);
-      pulse3->GetXaxis()->SetRangeUser(60,75);
-      // pulse3->GetYaxis()->SetRangeUser(-0.03,0.04);
+      pulse3->GetXaxis()->SetRangeUser(index_min3*0.2-7,index_min3*0.2+15);
       pulse3->Draw("AP");
       c->SaveAs(Form("pulse3_event%d.pdf", iEntry+1));
       
@@ -808,7 +807,7 @@ float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index
   return timepeak;
 }
 
-float RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float lowFraction, const float highFraction, float* tstamp, int event, TString fname, bool makePlot, bool trigger)
+float RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float lowFraction, const float highFraction, float* tstamp, int event, TString fname, bool makePlot, bool trigger, bool sipm)
 {
   double x_low, x_high, xdummy, y, dummy;
   double ymax;
@@ -836,6 +835,13 @@ float RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float 
     {
       pulse->GetPoint(index_min-9, x_low, y);
       pulse->GetPoint(index_min-2, x_high, y);
+      pulse->GetPoint(index_min, dummy, y);
+    }
+
+   if (sipm)
+    {
+      pulse->GetPoint(index_min-4, x_low, y);
+      pulse->GetPoint(index_min-1, x_high, y);
       pulse->GetPoint(index_min, dummy, y);
     }
  
