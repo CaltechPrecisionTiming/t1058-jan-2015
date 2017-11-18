@@ -332,7 +332,7 @@ int main (int argc, char **argv)
       //Create baseline corrected TGraphs (make sure you invert your pulse if they are negative)
       //----------------------------------------------------------------------------------------
       pulse1 = new TGraphErrors( GetTGraph( Channel1VoltagesRaw_, ti1_, false ) );
-      pulse2 = new TGraphErrors( GetTGraph( Channel2VoltagesRaw_, ti2_, true ) );
+      pulse2 = new TGraphErrors( GetTGraph( Channel2VoltagesRaw_, ti2_, false ) );
       pulse3 = new TGraphErrors( GetTGraph( Channel3VoltagesRaw_, ti3_, true ) );
       pulse4 = new TGraphErrors( GetTGraph( Channel4VoltagesRaw_, ti4_, true ) );
       
@@ -353,7 +353,7 @@ int main (int argc, char **argv)
       //NOTE: if your pulse is negative set _findMin (last input in the FindMaxAbsolute function) flag to <true>
       //std::cout << "=====event " << iEntry+1 << "==========" << std::endl;	
       int index_min1 = FindMaxAbsolute(1024, Channel1VoltagesRaw_, false); // return index of the max
-      int index_min2 = FindMaxAbsolute(1024, Channel2VoltagesRaw_, true); // return index of the max
+      int index_min2 = FindMaxAbsolute(1024, Channel2VoltagesRaw_, false); // return index of the max
       int index_min3 = FindMaxAbsolute(1024, Channel3VoltagesRaw_, true); // return index of the max
       int index_min4 = FindMaxAbsolute(1024, Channel4VoltagesRaw_, true); // return index of the max
 
@@ -389,7 +389,7 @@ int main (int argc, char **argv)
     
       ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 4, 3, pulseName1, false);
       //ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 2, 3, pulseName2, false);
-      ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 3, pulseName3, false);
+      //ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 3, pulseName3, false);
       //ch4Time_gausfitroot = GausFit_MeanTime( pulse4, index_min4, 8, 8, pulseName3, false);
       
       //---------------------
@@ -402,12 +402,12 @@ int main (int argc, char **argv)
       
 
       ch1Risetime = RisingEdgeFitTime( pulse1, index_min1, 0.15, 0.95, fs1, iEntry, "linearFit_" + pulseName1, false, true, false);
-      //ch2Risetime = RisingEdgeFitTime( pulse2, index_min2, 0.15, 0.85, fs2, iEntry, "linearFit_" + pulseName2, false, false);
-      ch3Risetime = RisingEdgeFitTime( pulse3, index_min3, 0.2, 0.8, fs3, iEntry, "linearFit_" + pulseName3, false, false, true);
+      ch2Risetime = RisingEdgeFitTime( pulse2, index_min2, 0.05, 0.5, fs2, iEntry, "linearFit_" + pulseName2, false, false, false);
+      //ch3Risetime = RisingEdgeFitTime( pulse3, index_min3, 0.2, 0.8, fs3, iEntry, "linearFit_" + pulseName3, false, false, true);
       //ch4Risetime = RisingEdgeFitTime( pulse4, index_min4, 0.1, 0.4, fs4, iEntry, "linearFit_" + pulseName4, false);
 
       ch1THM = fs1[2];
-      ch2THM = fs2[2];
+      ch2THM = fs2[1];
       ch3THM = fs3[3];
       ch4THM = fs4[1];
       
@@ -419,24 +419,24 @@ int main (int argc, char **argv)
       
       if(iEntry+1<=20){
       TCanvas* c = new TCanvas("c","c",600,600);
-      pulse1->GetXaxis()->SetRangeUser(0,200);
+      pulse1->GetXaxis()->SetRangeUser((index_min1-17)*0.2,(index_min1+25)*0.2);
       pulse1->SetMarkerStyle(20);
       pulse1->Draw("AP");
       c->SaveAs(Form("pulse1_event%d.pdf", iEntry+1));
 
       //pulse2->GetXaxis()->SetRange(0,200);
       pulse2->SetMarkerStyle(20);
-      pulse2->GetXaxis()->SetRangeUser(index_min2-7,index_min2+10);
+      pulse2->GetXaxis()->SetRangeUser((index_min2-200)*0.2,(index_min2+25)*0.2);
       pulse2->Draw("AP");
       c->SaveAs(Form("pulse2_event%d.pdf", iEntry+1));
       
       pulse3->SetMarkerStyle(20);
-      pulse3->GetXaxis()->SetRangeUser(index_min3*0.2-7,index_min3*0.2+15);
+      pulse3->GetXaxis()->SetRangeUser((index_min3-7)*0.2,(index_min3+15)*0.2);
       pulse3->Draw("AP");
       c->SaveAs(Form("pulse3_event%d.pdf", iEntry+1));
       
       pulse4->SetMarkerStyle(20);
-      pulse4->GetXaxis()->SetRangeUser(0,200);
+      pulse4->GetXaxis()->SetRangeUser((index_min4-7)*0.2,(index_min4+15)*0.2);
       pulse4->Draw("AP");
       c->SaveAs(Form("pulse4_event%d.pdf", iEntry+1));
       }
@@ -535,9 +535,9 @@ int FindMaxAbsolute( int n, float *a, bool _findMin ) {
       for  ( int i = 5; i < n-10; i++ )
 	{
 	  // to 2 mV cut
-	  if ( a[i] > xmax && a[i+1] < 0.9*a[i] && a[i] > 0.002 )  
+	  if ( a[i] > xmax && a[i+1] < 0.999*a[i] && a[i] > 0.05 )
 	    {
-	      //std::cout << i << " " << a[i] << std::endl;
+	      //std::cout << i*0.2 << " " << a[i] << std::endl;
 	      xmax = a[i];
 	      loc = i;
 	    }
@@ -568,7 +568,7 @@ int FindFirstMaximum( int n, float *a, bool _findMin ) {
       for  ( int i = 5; i < n-10; i++ )
 	{
 	  // to 2 mV cut
-	  if ( a[i] > xmax && a[i+1] < 0.9*a[i] && a[i] > 0.02 )  
+	  if ( a[i] > xmax && a[i+1] < 0.99*a[i] && a[i] > 0.02 )  
 	    {
 	      //std::cout << i << " " << a[i] << std::endl;
               return i;
@@ -833,8 +833,8 @@ float RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float 
   //----------------------------------------------------------------
   if (trigger)
     {
-      pulse->GetPoint(index_min-9, x_low, y);
-      pulse->GetPoint(index_min-2, x_high, y);
+      pulse->GetPoint(index_min-6, x_low, y);
+      pulse->GetPoint(index_min-1, x_high, y);
       pulse->GetPoint(index_min, dummy, y);
     }
 
@@ -864,7 +864,7 @@ float RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float 
     }
   tstamp[0] = (0.0*y-b)/slope;
   //std::cout << "----" << tstamp[0]  << std::endl;
-  tstamp[1] = (0.15*y-b)/slope;
+  tstamp[1] = (0.20*y-b)/slope;
   tstamp[2] = (0.30*y-b)/slope;
   tstamp[3] = (0.4*y-b)/slope;//Best Configuration for picsec laser trigger
   tstamp[4] = (0.60*y-b)/slope;
