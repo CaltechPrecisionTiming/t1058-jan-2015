@@ -402,7 +402,7 @@ int main (int argc, char **argv)
       
 
       ch1Risetime = RisingEdgeFitTime( pulse1, index_min1, 0.15, 0.95, fs1, iEntry, "linearFit_" + pulseName1, false, true, false);
-      ch2Risetime = RisingEdgeFitTime( pulse2, index_min2, 0.05, 0.5, fs2, iEntry, "linearFit_" + pulseName2, false, false, false);
+      ch2Risetime = RisingEdgeFitTime( pulse2, index_min2, 0.03, 0.15, fs2, iEntry, "linearFit_" + pulseName2, false, false, false);
       //ch3Risetime = RisingEdgeFitTime( pulse3, index_min3, 0.2, 0.8, fs3, iEntry, "linearFit_" + pulseName3, false, false, true);
       //ch4Risetime = RisingEdgeFitTime( pulse4, index_min4, 0.1, 0.4, fs4, iEntry, "linearFit_" + pulseName4, false);
 
@@ -426,7 +426,7 @@ int main (int argc, char **argv)
 
       //pulse2->GetXaxis()->SetRange(0,200);
       pulse2->SetMarkerStyle(20);
-      pulse2->GetXaxis()->SetRangeUser((index_min2-200)*0.2,(index_min2+25)*0.2);
+      pulse2->GetXaxis()->SetRangeUser((index_min2-200)*0.2,(index_min2-150)*0.2);
       pulse2->Draw("AP");
       c->SaveAs(Form("pulse2_event%d.pdf", iEntry+1));
       
@@ -834,7 +834,7 @@ float RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float 
   if (trigger)
     {
       pulse->GetPoint(index_min-6, x_low, y);
-      pulse->GetPoint(index_min-1, x_high, y);
+      pulse->GetPoint(index_min-2, x_high, y);
       pulse->GetPoint(index_min, dummy, y);
     }
 
@@ -864,7 +864,7 @@ float RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float 
     }
   tstamp[0] = (0.0*y-b)/slope;
   //std::cout << "----" << tstamp[0]  << std::endl;
-  tstamp[1] = (0.20*y-b)/slope;
+  tstamp[1] = (0.10*y-b)/slope;
   tstamp[2] = (0.30*y-b)/slope;
   tstamp[3] = (0.4*y-b)/slope;//Best Configuration for picsec laser trigger
   tstamp[4] = (0.60*y-b)/slope;
