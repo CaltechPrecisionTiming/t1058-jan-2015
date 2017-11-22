@@ -35,6 +35,7 @@ TGraphErrors* GetTGraphFilter( float* channel, float* time, TString pulseName, b
 float GetPulseIntegral(int peak, float *a, float *t, std::string option, int peakmin, int peakmax);
 float GetBaseline(TGraphErrors * pulse, int i_low, int i_high, TString fname );
 TGraphErrors GetTGraph(  float* channel, float* time, bool invert = false );
+float GetRiseTime(  float* channel, float* time, float max, bool invert = false, float low = 0.1, float high = 0.9 );
 int FindRealMin( int n, float *a);
 float RisingEdgeFitTime(TGraphErrors* pulse, const float index_min, const float lowFraction, const float highFraction, float* tstamp, int event, TString fname, bool makePlot, bool trigger = false, bool sipm = false);
 
@@ -406,6 +407,8 @@ int main (int argc, char **argv)
       //ch3Risetime = RisingEdgeFitTime( pulse3, index_min3, 0.2, 0.8, fs3, iEntry, "linearFit_" + pulseName3, false, false, true);
       //ch4Risetime = RisingEdgeFitTime( pulse4, index_min4, 0.1, 0.4, fs4, iEntry, "linearFit_" + pulseName4, false);
 
+      ch2Risetime = GetRiseTime( Channel2VoltagesRaw_, ti2_, ch2Amp, false, 0.1, 0.9 );
+      
       ch1THM = fs1[2];
       ch2THM = fs2[1];
       ch3THM = fs3[3];
@@ -577,6 +580,62 @@ int FindFirstMaximum( int n, float *a, bool _findMin ) {
     }
   return loc;
 }
+
+float GetRiseTime(  float* channel, float* time, float max, bool invert, float low, float high )
+{
+  if ( !channel ) return -999;
+  float t_low, t_high, risetime;
+  if ( invert )
+    {
+      //low edge
+      for  (int i = 5; i < 1020; i++)
+	{
+	  // to 2mV cut
+	  if ( channel[i] < -1.0*fabs(max)*low && channel[i] < -0.02 )  
+	    {
+	      t_low = time[i];
+	      break;
+	    }
+	}
+      //high edge
+      for  (int i = 5; i < 1020; i++)
+	{
+	  // to 2mV cut
+	  if ( channel[i] < -1.0*fabs(max)*high && channel[i] < -0.02 )  
+	    {
+	      t_high = time[i];
+	      break;
+	    }
+	}
+      risetime = t_high-t_low;
+    }
+  else
+    {
+      //low edge
+      for  (int i = 5; i < 1020; i++)
+	{
+	  // to 2mV cut
+	  if ( channel[i] > max*low && channel[i] > 0.02 )  
+	    {
+	      t_low = time[i];
+	      break;
+	    }
+	}
+      //high edge
+      for  (int i = 5; i < 1020; i++)
+	{
+	  // to 2mV cut
+	  if ( channel[i] > max*high && channel[i] > 0.02 )  
+	    {
+	      t_high = time[i];
+	      break;
+	    }
+	}
+      risetime = t_high-t_low;
+    }
+  return risetime;
+  
+};
 
 float GetBaseline(TGraphErrors * pulse, int i_low, int i_high, TString fname )
 {
