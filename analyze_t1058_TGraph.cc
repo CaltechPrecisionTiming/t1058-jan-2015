@@ -56,6 +56,7 @@ int main (int argc, char **argv)
 
   float f_xpos = 0.0;//in mm
   float f_ypos = 0.0;//in mm
+  float V_bias = 0.0;//bias voltage, in V
 
   std::string runNum;
   std::string inputDir;
@@ -100,8 +101,14 @@ int main (int argc, char **argv)
 	f_ypos = float(atof(argv[4]));
   }
 
+  if (argc >= 6)
+  {
+	V_bias = float(atof(argv[5]));
+  }
+
+
   bool includePulseshapeInOutput = false;
-  if (argc >= 6) includePulseshapeInOutput = bool(atoi(argv[5]));
+  if (argc >= 7) includePulseshapeInOutput = bool(atoi(argv[6]));
   
   //const int splineBinFactor = 40;
   const int splineBinFactor = 1;
@@ -256,6 +263,7 @@ int main (int argc, char **argv)
   treeOut->Branch("event",&eventNumber,"event/i");
   treeOut->Branch("x",&f_xpos,"x/F");
   treeOut->Branch("y",&f_ypos,"y/F");
+  treeOut->Branch("V_bias",&V_bias,"V_bias/F");
   treeOut->Branch("t1gausroot",&ch1Time_gausfitroot,"t1gausroot/F");
   treeOut->Branch("t2gausroot",&ch2Time_gausfitroot,"t2gausroot/F");
   treeOut->Branch("t3gausroot",&ch3Time_gausfitroot,"t3gausroot/F");

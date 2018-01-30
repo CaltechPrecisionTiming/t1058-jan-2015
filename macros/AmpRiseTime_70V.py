@@ -28,13 +28,10 @@ bottomMargin = 0.12
 ########################################################
 
 #################input parameters#######################
-#run = "combine_1002_1015_407nm"
-#run = "combine_1016_1029_373nm"
-run = "combine_1032_1045_373nm"
-#run = "combine_1046_1059_407nm"
-isUVlaser = True
+run = "combine_1117_1132_407nm"
+#run = "combine_1101_1116_373nm"
+isUVlaser = False
 
-#run = "1031"
 inputDir = "~/LabData/Zhicai_Spring2018/data/"
 outputDir = "~/LabData/Zhicai_Spring2018/plots/"
 
@@ -45,19 +42,19 @@ cut = "ch1Amp>0.2 && ch1Amp<0.35 && ch2Amp > 0.002 && t1gausroot>0 && t2gausroot
 
 deltaT_mean = 42.9 #for 407nm laser
 RiseTime_mean = 0.67 # for 407nm laser
-max_amp = 0.10 # for 407nm laser
+max_amp = 0.40 # for 407nm laser
 max_timeReso = 0.05 # for 407nm laser
 
 if isUVlaser:
-	cut = "ch1Amp>0.2 && ch1Amp<0.35 && ch2Amp > 0.002 && t1gausroot>0 && t2gausroot>109 && t2gausroot<111"
+	cut = "ch1Amp>0.2 && ch1Amp<0.35 && ch2Amp > 0.005 && t1gausroot>0 && t2gausroot>109 && t2gausroot<112"
 	deltaT_mean = 41.9 #for 373nm laser
 	RiseTime_mean = 0.7 # for 407nm laser
-	max_amp = 0.10 # for 373nm laser
+	max_amp = 0.1 # for 373nm laser
 	max_timeReso = 0.05 # for 373nm laser
 
 x_low = -0.5
-x_high = 13.5
-nbins_X = 14
+x_high = 15.5
+nbins_X = 16
 ########################################################
 
 file=ROOT.TFile(inputDir+run+"_ana.root")
@@ -128,8 +125,8 @@ for ix in range(0, nbins_X):
         hist_deltaT.GetYaxis().SetTitleOffset( axisTitleOffsetY )
 	hist_deltaT.Draw("E")
 	maximumY=hist_deltaT.GetMaximum()
-	highDeltaT=hist_deltaT.GetBinCenter(hist_deltaT.FindLastBinAbove(int(0.2*maximumY)))
-	lowDeltaT=hist_deltaT.GetBinCenter(hist_deltaT.FindFirstBinAbove(int(0.2*maximumY)))
+	highDeltaT=hist_deltaT.GetBinCenter(hist_deltaT.FindLastBinAbove(int(0.15*maximumY)))
+	lowDeltaT=hist_deltaT.GetBinCenter(hist_deltaT.FindFirstBinAbove(int(0.3*maximumY)))
 	tf1_gaus = ROOT.TF1("tf1_gaus","gaus", deltaT_mean-1.0, deltaT_mean+3.0)
 	tf1_gaus.SetParameter(1, hist_deltaT.GetMean())
 	hist_deltaT.Fit("tf1_gaus","","",lowDeltaT, highDeltaT)
@@ -141,10 +138,8 @@ for ix in range(0, nbins_X):
 		mean_deltaT = hist_deltaT.GetMean()
 	emean_deltaT = tf1_gaus.GetParError(1)
 	sigma_deltaT = tf1_gaus.GetParameter(2)
-	'''
 	if sigma_deltaT > hist_deltaT.GetStdDev():	
 		sigma_deltaT = hist_deltaT.GetStdDev()
-	'''
 	esigma_deltaT = tf1_gaus.GetParError(2)
 
 	deltaT.append(mean_deltaT)
@@ -158,7 +153,7 @@ for ix in range(0, nbins_X):
 	print "fit sigma of delta T = "+str(sigma_deltaT)
 
 
-	hist_ch2Amp = ROOT.TH1F("hist_ch2Amp_"+str(x_this),"hist_ch2Amp_"+str(x_this), 200, 0.0, 0.1)
+	hist_ch2Amp = ROOT.TH1F("hist_ch2Amp_"+str(x_this),"hist_ch2Amp_"+str(x_this), 1000, 0.0, 0.5)
 	tree.Draw("ch2Amp>>hist_ch2Amp_"+str(x_this),cut_this)	
 	hist_ch2Amp.SetMarkerStyle( 20 )
 	hist_ch2Amp.SetMarkerColor( ROOT.kBlack )
@@ -173,7 +168,7 @@ for ix in range(0, nbins_X):
 	maximumY=hist_ch2Amp.GetMaximum()
 	highch2Amp=hist_ch2Amp.GetBinCenter(hist_ch2Amp.FindLastBinAbove(int(0.3*maximumY)))
 	lowch2Amp=hist_ch2Amp.GetBinCenter(hist_ch2Amp.FindFirstBinAbove(int(0.3*maximumY)))
-	tf1_gaus_amp = ROOT.TF1("tf1_gaus_amp","gaus", 0.0, 0.1)
+	tf1_gaus_amp = ROOT.TF1("tf1_gaus_amp","gaus", 0.0, 0.5)
 	tf1_gaus_amp.SetParameter(1, hist_ch2Amp.GetMean())
 	hist_ch2Amp.Fit("tf1_gaus_amp","","",lowch2Amp, highch2Amp)
 	myC.SaveAs(outputDir+run+"_ch2Amp_x"+str(x_this)+"mm.pdf")
@@ -191,11 +186,11 @@ for ix in range(0, nbins_X):
 	print "fit sigma of ch2Amp = "+str(sigma_ch2Amp)
 
 
-	N_Risetime = 500
+	N_Risetime = 300
 	if NEntries < 1000:
 		N_Risetime = 100
 		
-	hist_ch2Risetime = ROOT.TH1F("hist_ch2Risetime_"+str(x_this),"hist_ch2Risetime_"+str(x_this), N_Risetime, 0.0, 5.0)
+	hist_ch2Risetime = ROOT.TH1F("hist_ch2Risetime_"+str(x_this),"hist_ch2Risetime_"+str(x_this), N_Risetime, 0.0, 3.0)
 	tree.Draw("ch2Risetime>>hist_ch2Risetime_"+str(x_this),cut_this)	
 	hist_ch2Risetime.SetMarkerStyle( 20 )
 	hist_ch2Risetime.SetMarkerColor( ROOT.kBlack )
@@ -210,7 +205,7 @@ for ix in range(0, nbins_X):
 	maximumY=hist_ch2Risetime.GetMaximum()
 	highch2Risetime=hist_ch2Risetime.GetBinCenter(hist_ch2Risetime.FindLastBinAbove(int(0.2*maximumY)))
 	lowch2Risetime=hist_ch2Risetime.GetBinCenter(hist_ch2Risetime.FindFirstBinAbove(int(0.1*maximumY)))
-	tf1_gaus_risetime = ROOT.TF1("tf1_gaus_risetime","gaus", 0.0, 5.0)
+	tf1_gaus_risetime = ROOT.TF1("tf1_gaus_risetime","gaus", 0.0, 3.0)
 	tf1_gaus_risetime.SetParameter(1, hist_ch2Risetime.GetMean())
 	hist_ch2Risetime.Fit("tf1_gaus_risetime","","",lowch2Risetime, highch2Risetime)
 	myC.SaveAs(outputDir+run+"_ch2Risetime_x"+str(x_this)+"mm.pdf")
@@ -329,7 +324,7 @@ gr_ch2Risetime_vs_x.GetXaxis().SetTitleSize( axisTitleSizeX )
 gr_ch2Risetime_vs_x.GetXaxis().SetTitleOffset( axisTitleOffsetX )
 gr_ch2Risetime_vs_x.GetYaxis().SetTitleSize( axisTitleSizeY )
 gr_ch2Risetime_vs_x.GetYaxis().SetTitleOffset( axisTitleOffsetY )
-gr_ch2Risetime_vs_x.GetYaxis().SetRangeUser(0.5,1.5)
+gr_ch2Risetime_vs_x.GetYaxis().SetRangeUser(0.5, 1.5)
 gr_ch2Risetime_vs_x.Draw("AP")
 myC.SaveAs(outputDir+run+"_ch2Risetime_vs_x.pdf")
 myC.SaveAs(outputDir+run+"_ch2Risetime_vs_x.png")
