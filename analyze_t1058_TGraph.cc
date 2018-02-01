@@ -43,7 +43,7 @@ void FitDirectHitPlusScintillationSignal(TGraphErrors* pulse, const float index_
 float LED( TH1F * pulse, double threshold, int nsamples, int splineBinFactor );
 float LinearFit_Baseline(TH1F * pulse, const int index_min, const int range);
 float LinearFit_Intercept(TH1F * pulse, const float base, const int index_first, const int index_last);
-float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index_first, const int index_last, TString pulseName, bool makePlot );
+float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index_first, const int index_last, float * fit_result, TString pulseName, bool makePlot );
 void FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH, float &THM, float &risetime, float base);
 void FitFullPulse(TH1F* pulse, float &par0, float &par1, float &par2);
 TH1F* InterpolateWaveform(int nsamples, float* outputwaveform, float *inputwaveform, int splineBinFactor, std::string name);
@@ -119,12 +119,19 @@ int main (int argc, char **argv)
   float Channel3VoltagesRaw_[Nsamples];
   float Channel4VoltagesRaw_[Nsamples];
 
+  float Channel1VoltagesRawNorm_[Nsamples];
+  float Channel2VoltagesRawNorm_[Nsamples];
+  float Channel3VoltagesRawNorm_[Nsamples];
+  float Channel4VoltagesRawNorm_[Nsamples];
+
+
   float Channel1Voltages_[Nsamples*splineBinFactor];
   float Channel2Voltages_[Nsamples*splineBinFactor];
   float Channel3Voltages_[Nsamples*splineBinFactor];
   float Channel4Voltages_[Nsamples*splineBinFactor];
 
   float ti1_[Nsamples], ti2_[Nsamples], ti3_[Nsamples], ti4_[Nsamples];
+  float tishift1_[Nsamples], tishift2_[Nsamples], tishift3_[Nsamples], tishift4_[Nsamples];
 
   bool convert2Volts = true;
   float amp[4];
@@ -169,7 +176,8 @@ int main (int argc, char **argv)
     int pf = fn.find(".root");
     int pi = fn.rfind("/")+1;
     //fn = "AnaFiles/" + fn.substr(pi, pf-pi) + "_ana.root";
-    fn = fn.substr(0, pf) + "_ana.root";
+    if(includePulseshapeInOutput) fn = fn.substr(0, pf) + "_ana_withpulse.root";
+    else fn = fn.substr(0, pf) + "_ana.root";
     std::cout << "fname: " << fn << std::endl;
     //return 0;
     fout = new TFile(fn.c_str(),"recreate");
@@ -247,6 +255,15 @@ int main (int argc, char **argv)
   float ch6Int = 0;
   float ch7Int = 0;
   float ch8Int = 0;
+ 
+  float ch1Int_gauspeak = 0;
+  float ch2Int_gauspeak = 0;
+  float ch3Int_gauspeak = 0;
+  float ch4Int_gauspeak = 0;
+  float ch5Int_gauspeak = 0;
+  float ch6Int_gauspeak = 0;
+  float ch7Int_gauspeak = 0;
+  float ch8Int_gauspeak = 0;
   
   unsigned int ch1QualityBit = 0;
   unsigned int ch2QualityBit = 0;
@@ -334,6 +351,11 @@ int main (int argc, char **argv)
   treeOut->Branch("ch2Int",&ch2Int,"ch2Int/F");
   treeOut->Branch("ch3Int",&ch3Int,"ch3Int/F");
   treeOut->Branch("ch4Int",&ch4Int,"ch4Int/F");
+ 
+  treeOut->Branch("ch1Int_gauspeak",&ch1Int_gauspeak,"ch1Int_gauspeak/F");
+  treeOut->Branch("ch2Int_gauspeak",&ch2Int_gauspeak,"ch2Int_gauspeak/F");
+  treeOut->Branch("ch3Int_gauspeak",&ch3Int_gauspeak,"ch3Int_gauspeak/F");
+  treeOut->Branch("ch4Int_gauspeak",&ch4Int_gauspeak,"ch4Int_gauspeak/F");
   
   treeOut->Branch("ch1chisq",&ch1chisq,"ch1chisq/F");
   treeOut->Branch("ch2chisq",&ch2chisq,"ch2chisq/F");
@@ -346,12 +368,24 @@ int main (int argc, char **argv)
     treeOut->Branch("c2",Channel2VoltagesRaw_,"c2[1024]/F");
     treeOut->Branch("c3",Channel3VoltagesRaw_,"c3[1024]/F");
     treeOut->Branch("c4",Channel4VoltagesRaw_,"c4[1024]/F");
+
+    treeOut->Branch("c1norm",Channel1VoltagesRawNorm_,"c1norm[1024]/F");
+    treeOut->Branch("c2norm",Channel2VoltagesRawNorm_,"c2norm[1024]/F");
+    treeOut->Branch("c3norm",Channel3VoltagesRawNorm_,"c3norm[1024]/F");
+    treeOut->Branch("c4norm",Channel4VoltagesRawNorm_,"c4norm[1024]/F");
+
     treeOut->Branch("t",t_,"t[1024]/I");
     
-    treeOut->Branch("ti1",ti1_,"ti1[1024]/D");
-    treeOut->Branch("ti2",ti2_,"ti2[1024]/D");
-    treeOut->Branch("ti3",ti3_,"ti3[1024]/D");
-    treeOut->Branch("ti4",ti4_,"ti4[1024]/D");
+    treeOut->Branch("ti1",ti1_,"ti1[1024]/F");
+    treeOut->Branch("ti2",ti2_,"ti2[1024]/F");
+    treeOut->Branch("ti3",ti3_,"ti3[1024]/F");
+    treeOut->Branch("ti4",ti4_,"ti4[1024]/F");
+
+    treeOut->Branch("tishift1",tishift1_,"tishift1[1024]/F");
+    treeOut->Branch("tishift2",tishift2_,"tishift2[1024]/F");
+    treeOut->Branch("tishift3",tishift3_,"tishift3[1024]/F");
+    treeOut->Branch("tishift4",tishift4_,"tishift4[1024]/F");
+
   }
 
   //read all entries and fill the histograms
@@ -455,7 +489,11 @@ int main (int argc, char **argv)
       if ( index_min1 != 0 ) ch1Int = GetPulseIntegral( index_min1 , Channel1VoltagesRaw_, ti1_, "part", 20, 15);
       else ch1Int = 0.0;
 
-      if ( index_min2 != 0 ) ch2Int = GetPulseIntegral( index_min2 , Channel2VoltagesRaw_,ti2_,  "part", 5, 5);
+      if ( index_min2 != 0 ) 
+	{
+		ch2Int = GetPulseIntegral( index_min2 , Channel2VoltagesRaw_,ti2_,  "part", 20, 150);
+		ch2Int_gauspeak = 2.0 * GetPulseIntegral( index_min2 , Channel2VoltagesRaw_,ti2_,  "part", 20, 0);
+	}
       else ch2Int = 0.0;
       
       if ( index_min3 != 0 ) ch3Int = GetPulseIntegral( index_min3 , Channel3VoltagesRaw_, ti3_,  "full", 6, 10);
@@ -467,12 +505,34 @@ int main (int argc, char **argv)
       //----------------
       // Gauss TimeStamp
       //----------------
-    
-      ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 4, 3, pulseName1, false);
-      ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 3, 3, pulseName2, false);
+
+      float fit_result1[3];   
+      float fit_result2[3];   
+ 
+      ch1Time_gausfitroot = GausFit_MeanTime( pulse1, index_min1, 4, 3, fit_result1, pulseName1, false);
+      ch2Time_gausfitroot = GausFit_MeanTime( pulse2, index_min2, 3, 3, fit_result2, pulseName2, false);
       // ch3Time_gausfitroot = GausFit_MeanTime( pulse3, index_min3, 3, 3, pulseName3, false);
       // ch4Time_gausfitroot = GausFit_MeanTime( pulse4, index_min4, 8, 8, pulseName3, false);
       
+      //ch1Int_gauspeak = sqrt(2.0*3.141592653) * fit_result1[2] * fit_result1[0] * 1e-9 * (1.0/50.0) * 1e12; //in units of pC, for 50Ohm termination
+      //ch2Int_gauspeak = sqrt(2.0*3.141592653) * fit_result2[2] * fit_result2[0] * 1e-9 * (1.0/50.0) * 1e12; //in units of pC, for 50Ohm termination
+
+      //shift the pulse by subtracting the refrence time
+      
+      for(int i=0;i<Nsamples;i++)
+      {
+	if(ch1Time_gausfitroot > 0 && ch1Time_gausfitroot < 200)
+	{
+		tishift1_[i] = ti1_[i] -  ch1Time_gausfitroot;
+		tishift2_[i] = ti1_[i] -  ch1Time_gausfitroot;
+		tishift3_[i] = ti1_[i] -  ch1Time_gausfitroot;
+		tishift4_[i] = ti1_[i] -  ch1Time_gausfitroot;
+	}
+	if(ch1Amp>0) Channel1VoltagesRawNorm_[i] = Channel1VoltagesRaw_[i]/ch1Amp;
+	if(ch2Amp>0) Channel2VoltagesRawNorm_[i] = Channel2VoltagesRaw_[i]/ch2Amp;
+	if(ch3Amp>0) Channel3VoltagesRawNorm_[i] = Channel3VoltagesRaw_[i]/ch3Amp;
+	if(ch4Amp>0) Channel4VoltagesRawNorm_[i] = Channel4VoltagesRaw_[i]/ch4Amp;
+      }
       //---------------------
       // RisingEdge TimeStamp
       //---------------------
@@ -884,7 +944,7 @@ int FindRealMin( int n, float *a) {
   return loc_new;
 }
 
-float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index_first, const int index_last, TString pulseName, bool makePlot)
+float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index_first, const int index_last, float * fit_result, TString pulseName, bool makePlot)
 {
   double x_low, x_high, y;
   pulse->GetPoint(index_min-index_first, x_low, y);
@@ -901,6 +961,11 @@ float GausFit_MeanTime(TGraphErrors* pulse, const int index_min, const int index
   TF1* fpeak = new TF1("fpeak","gaus", x_low-.1, x_high+.1);
   pulse->Fit("fpeak","Q","", x_low-.1, x_high+.1);
   float timepeak = fpeak->GetParameter(1);
+
+  fit_result[0] = fpeak->GetParameter(0);
+  fit_result[1] = fpeak->GetParameter(1);
+  fit_result[2] = fpeak->GetParameter(2);
+
   if ( makePlot )
     {
       std::cout << "make plot" << std::endl;

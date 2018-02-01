@@ -30,9 +30,10 @@ bottomMargin = 0.12
 #################input parameters#######################
 #run = "combine_1002_1015_407nm"
 #run = "combine_1016_1029_373nm"
-run = "combine_1032_1045_373nm"
+#run = "combine_1032_1045_373nm"
 #run = "combine_1046_1059_407nm"
 
+run = "combine_1157_1171_373nm_UVfilter"
 isUVlaser = True
 
 #run = "1031"
@@ -50,15 +51,16 @@ max_amp = 0.10 # for 407nm laser
 max_timeReso = 0.05 # for 407nm laser
 
 if isUVlaser:
-	cut = "ch1Amp>0.2 && ch1Amp<0.35 && ch2Amp > 0.002 && t1gausroot>0 && ch2LinearTime60 - t1gausroot<43 && ch2LinearTime60 - t1gausroot>41"
-	deltaT_mean = 41.7 #for 373nm laser
-	RiseTime_mean = 0.7 # for 407nm laser
-	max_amp = 0.10 # for 373nm laser
+	cut = "ch1Amp>0.2 && ch1Amp<0.35 && ch2Amp > 0.005 && t1gausroot>0 && ch2LinearTime60 - t1gausroot<43 && ch2LinearTime60 - t1gausroot>41"
+	deltaT_mean = 41.75 #for 373nm laser
+	RiseTime_mean = 2.0 # for 407nm laser
+	max_amp = 0.03 # for 373nm laser
 	max_timeReso = 0.05 # for 373nm laser
+	max_risetime = 5.0
 
 x_low = -0.5
-x_high = 13.5
-nbins_X = 14
+x_high = 14.5
+nbins_X = 15
 ########################################################
 
 file=ROOT.TFile(inputDir+run+"_ana.root")
@@ -138,10 +140,15 @@ for ix in range(0, nbins_X):
 	myC.SaveAs(outputDir+run+"_deltaT_x"+str(x_this)+"mm.png")
 	myC.SaveAs(outputDir+run+"_deltaT_x"+str(x_this)+"mm.C")
 	mean_deltaT = tf1_gaus.GetParameter(1)
-	if abs(mean_deltaT - hist_deltaT.GetMean()) > 0.5:
-		mean_deltaT = hist_deltaT.GetMean()
 	emean_deltaT = tf1_gaus.GetParError(1)
 	sigma_deltaT = tf1_gaus.GetParameter(2)
+
+	if hist_deltaT.Integral() < 10.0:
+		mean_deltaT = 0.0 
+		emean_deltaT = 0.0 
+		sigma_deltaT = 0.0
+		esigma_deltaT = 0.0
+
 	'''
 	if sigma_deltaT > hist_deltaT.GetStdDev():	
 		sigma_deltaT = hist_deltaT.GetStdDev()
@@ -159,7 +166,7 @@ for ix in range(0, nbins_X):
 	print "fit sigma of delta T = "+str(sigma_deltaT)
 
 
-	hist_ch2Amp = ROOT.TH1F("hist_ch2Amp_"+str(x_this),"hist_ch2Amp_"+str(x_this), 200, 0.0, 0.1)
+	hist_ch2Amp = ROOT.TH1F("hist_ch2Amp_"+str(x_this),"hist_ch2Amp_"+str(x_this), 200, 0.0, max_amp)
 	tree.Draw("ch2Amp>>hist_ch2Amp_"+str(x_this),cut_this)	
 	hist_ch2Amp.SetMarkerStyle( 20 )
 	hist_ch2Amp.SetMarkerColor( ROOT.kBlack )
@@ -174,7 +181,7 @@ for ix in range(0, nbins_X):
 	maximumY=hist_ch2Amp.GetMaximum()
 	highch2Amp=hist_ch2Amp.GetBinCenter(hist_ch2Amp.FindLastBinAbove(int(0.3*maximumY)))
 	lowch2Amp=hist_ch2Amp.GetBinCenter(hist_ch2Amp.FindFirstBinAbove(int(0.3*maximumY)))
-	tf1_gaus_amp = ROOT.TF1("tf1_gaus_amp","gaus", 0.0, 0.1)
+	tf1_gaus_amp = ROOT.TF1("tf1_gaus_amp","gaus", 0.0, max_amp)
 	tf1_gaus_amp.SetParameter(1, hist_ch2Amp.GetMean())
 	hist_ch2Amp.Fit("tf1_gaus_amp","","",lowch2Amp, highch2Amp)
 	myC.SaveAs(outputDir+run+"_ch2Amp_x"+str(x_this)+"mm.pdf")
@@ -184,6 +191,11 @@ for ix in range(0, nbins_X):
 	emean_ch2Amp = tf1_gaus_amp.GetParError(1)
 	sigma_ch2Amp = tf1_gaus_amp.GetParameter(2)
 
+	if hist_ch2Amp.Integral() < 10.0:
+		mean_ch2Amp = 0.0
+		emean_ch2Amp = 0.0
+		sigma_ch2Amp = 0.0
+		esigma_ch2Amp = 0.0
 	ch2Amp.append(mean_ch2Amp)
 	ech2Amp.append(emean_ch2Amp)
 
@@ -196,7 +208,7 @@ for ix in range(0, nbins_X):
 	if NEntries < 1000:
 		N_Risetime = 100
 		
-	hist_ch2Risetime = ROOT.TH1F("hist_ch2Risetime_"+str(x_this),"hist_ch2Risetime_"+str(x_this), N_Risetime, 0.0, 5.0)
+	hist_ch2Risetime = ROOT.TH1F("hist_ch2Risetime_"+str(x_this),"hist_ch2Risetime_"+str(x_this), N_Risetime, 0.0, max_risetime)
 	tree.Draw("ch2Risetime>>hist_ch2Risetime_"+str(x_this),cut_this)	
 	hist_ch2Risetime.SetMarkerStyle( 20 )
 	hist_ch2Risetime.SetMarkerColor( ROOT.kBlack )
@@ -209,19 +221,26 @@ for ix in range(0, nbins_X):
         hist_ch2Risetime.GetYaxis().SetTitleOffset( axisTitleOffsetY )
 	hist_ch2Risetime.Draw("E")
 	maximumY=hist_ch2Risetime.GetMaximum()
-	highch2Risetime=hist_ch2Risetime.GetBinCenter(hist_ch2Risetime.FindLastBinAbove(int(0.2*maximumY)))
-	lowch2Risetime=hist_ch2Risetime.GetBinCenter(hist_ch2Risetime.FindFirstBinAbove(int(0.1*maximumY)))
-	tf1_gaus_risetime = ROOT.TF1("tf1_gaus_risetime","gaus", 0.0, 5.0)
+	highch2Risetime=hist_ch2Risetime.GetBinCenter(hist_ch2Risetime.FindLastBinAbove(int(0.7*maximumY)))
+	lowch2Risetime=hist_ch2Risetime.GetBinCenter(hist_ch2Risetime.FindFirstBinAbove(int(0.05*maximumY)))
+	peakch2Risetime=hist_ch2Risetime.GetBinCenter(hist_ch2Risetime.GetMaximumBin())
+	if highch2Risetime - peakch2Risetime > peakch2Risetime - lowch2Risetime:
+		highch2Risetime = peakch2Risetime + 0.5*(peakch2Risetime -  lowch2Risetime)
+	tf1_gaus_risetime = ROOT.TF1("tf1_gaus_risetime","gaus", 0.0, max_risetime)
 	tf1_gaus_risetime.SetParameter(1, hist_ch2Risetime.GetMean())
 	hist_ch2Risetime.Fit("tf1_gaus_risetime","","",lowch2Risetime, highch2Risetime)
 	myC.SaveAs(outputDir+run+"_ch2Risetime_x"+str(x_this)+"mm.pdf")
 	myC.SaveAs(outputDir+run+"_ch2Risetime_x"+str(x_this)+"mm.png")
 	myC.SaveAs(outputDir+run+"_ch2Risetime_x"+str(x_this)+"mm.C")
 	mean_ch2Risetime = tf1_gaus_risetime.GetParameter(1)
-	if abs(mean_ch2Risetime - hist_ch2Risetime.GetMean()) > 1.0:
-		mean_ch2Risetime = hist_ch2Risetime.GetMean()
 	emean_ch2Risetime = tf1_gaus_risetime.GetParError(1)
 	sigma_ch2Risetime = tf1_gaus_risetime.GetParameter(2)
+
+	if hist_ch2Risetime.Integral() < 10.0:
+		mean_ch2Risetime = 0.0
+		emean_ch2Risetime = 0.0 
+		sigma_ch2Risetime = 0.0
+		esigma_ch2Risetime = 0.0
 
 	ch2Risetime.append(mean_ch2Risetime)
 	ech2Risetime.append(emean_ch2Risetime)
@@ -273,7 +292,7 @@ gr_deltaT_vs_x.GetXaxis().SetTitleSize( axisTitleSizeX )
 gr_deltaT_vs_x.GetXaxis().SetTitleOffset( axisTitleOffsetX )
 gr_deltaT_vs_x.GetYaxis().SetTitleSize( axisTitleSizeY )
 gr_deltaT_vs_x.GetYaxis().SetTitleOffset( axisTitleOffsetY )
-gr_deltaT_vs_x.GetYaxis().SetRangeUser(40,44)
+gr_deltaT_vs_x.GetYaxis().SetRangeUser(41,43)
 gr_deltaT_vs_x.Draw("AP")
 myC.SaveAs(outputDir+run+"_deltaT_vs_x.pdf")
 myC.SaveAs(outputDir+run+"_deltaT_vs_x.png")
@@ -292,7 +311,7 @@ gr_ch2Amp_vs_x.GetXaxis().SetTitleSize( axisTitleSizeX )
 gr_ch2Amp_vs_x.GetXaxis().SetTitleOffset( axisTitleOffsetX )
 gr_ch2Amp_vs_x.GetYaxis().SetTitleSize( axisTitleSizeY )
 gr_ch2Amp_vs_x.GetYaxis().SetTitleOffset( axisTitleOffsetY )
-gr_ch2Amp_vs_x.GetYaxis().SetRangeUser(0.0, max_amp)
+gr_ch2Amp_vs_x.GetYaxis().SetRangeUser(0.001, max_amp)
 gr_ch2Amp_vs_x.Draw("AP")
 myC.SaveAs(outputDir+run+"_ch2Amp_vs_x.pdf")
 myC.SaveAs(outputDir+run+"_ch2Amp_vs_x.png")

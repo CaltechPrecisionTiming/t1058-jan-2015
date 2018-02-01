@@ -28,26 +28,26 @@ bottomMargin = 0.12
 ########################################################
 
 #################input parameters#######################
-run = "combine_1060_1079_407nm"
-#run = "combine_1080_1100_373nm"
-isUVlaser = False
+#run = "combine_1060_1079_407nm"
+run = "combine_1080_1100_373nm"
+isUVlaser = True
 
 inputDir = "~/LabData/Zhicai_Spring2018/data/"
 outputDir = "~/LabData/Zhicai_Spring2018/plots/"
 
 os.system("mkdir -p "+outputDir)
 
-cut = "ch1Amp>0.2 && ch1Amp<0.35 && ch2Amp > 0.002 && t1gausroot>0 && t2gausroot>110 && t2gausroot<112"
+cut = "ch1Amp>0.2 && ch1Amp<0.35 && ch2Amp > 0.002 && t1gausroot>0"# &&  ch2LinearTime60 - t1gausroot<44 && ch2LinearTime60 - t1gausroot>41"
 
 
-deltaT_mean = 42.9 #for 407nm laser
+deltaT_mean = 42.7 #for 407nm laser
 RiseTime_mean = 0.67 # for 407nm laser
 max_amp = 0.50 # for 407nm laser
 max_timeReso = 0.08 # for 407nm laser
 
 if isUVlaser:
-	cut = "ch1Amp>0.2 && ch1Amp<0.35 && ch2Amp > 0.002 && t1gausroot>0 && t2gausroot>109 && t2gausroot<111"
-	deltaT_mean = 41.9 #for 373nm laser
+	cut = "ch1Amp>0.2 && ch1Amp<0.35 && ch2Amp > 0.002 && t1gausroot>0"# &&  ch2LinearTime60 - t1gausroot<44 && ch2LinearTime60 - t1gausroot>41"
+	deltaT_mean = 41.75 #for 373nm laser
 	RiseTime_mean = 0.7 # for 407nm laser
 	max_amp = 0.30 # for 373nm laser
 	max_timeReso = 0.10 # for 373nm laser
@@ -67,13 +67,14 @@ timeReso = []
 deltaT = []
 ch2Amp = []
 ch2Risetime = []
+ch2IntRatio = []
 
 ebias_val = []
 etimeReso = []
 edeltaT = []
 ech2Amp = []
 ech2Risetime = []
-
+ech2IntRatio = []
 
 #####scan over different positions
 
@@ -112,8 +113,8 @@ for ibias in range(0, nbins_bias):
 	if NEntries < 800:
 		N_deltaT = 50
 
-	hist_deltaT = ROOT.TH1F("hist_deltaT_"+str(bias_this),"hist_deltaT_"+str(bias_this),N_deltaT,deltaT_mean-1.0,deltaT_mean+3.0)
-	tree.Draw("t2gausroot-t1gausroot>>hist_deltaT_"+str(bias_this),cut_this)	
+	hist_deltaT = ROOT.TH1F("hist_deltaT_"+str(bias_this),"hist_deltaT_"+str(bias_this),N_deltaT,deltaT_mean-2.0,deltaT_mean+2.0)
+	tree.Draw("ch2LinearTime60-t1gausroot>>hist_deltaT_"+str(bias_this),cut_this)	
 	hist_deltaT.SetMarkerStyle( 20 )
 	hist_deltaT.SetMarkerColor( ROOT.kBlack )
 	hist_deltaT.GetXaxis().SetTitle("#Delta t (SiPM, laser) [ns]")
@@ -127,7 +128,7 @@ for ibias in range(0, nbins_bias):
 	maximumY=hist_deltaT.GetMaximum()
 	highDeltaT=hist_deltaT.GetBinCenter(hist_deltaT.FindLastBinAbove(int(0.2*maximumY)))
 	lowDeltaT=hist_deltaT.GetBinCenter(hist_deltaT.FindFirstBinAbove(int(0.2*maximumY)))
-	tf1_gaus = ROOT.TF1("tf1_gaus","gaus", deltaT_mean-1.0, deltaT_mean+3.0)
+	tf1_gaus = ROOT.TF1("tf1_gaus","gaus", deltaT_mean-2.0, deltaT_mean+2.0)
 	tf1_gaus.SetParameter(1, hist_deltaT.GetMean())
 	hist_deltaT.Fit("tf1_gaus","","",lowDeltaT, highDeltaT)
 	myC.SaveAs(outputDir+run+"_deltaT_bias"+str(bias_this)+"V.pdf")
@@ -225,6 +226,48 @@ for ibias in range(0, nbins_bias):
 	print "mean of ch2Risetime = "+str(hist_ch2Risetime.GetMean())
 	print "fit mean of ch2Risetime = "+str(mean_ch2Risetime)
 	print "fit sigma of ch2Risetime = "+str(sigma_ch2Risetime)
+
+	hist_ch2IntRatio = ROOT.TH1F("hist_ch2IntRatio_"+str(bias_this),"hist_ch2IntRatio_"+str(bias_this), 600, 0.0, 1.5)
+	tree.Draw("(ch2Int - ch2Int_gauspeak)/ch2Int>>hist_ch2IntRatio_"+str(bias_this),cut_this)	
+	hist_ch2IntRatio.SetMarkerStyle( 20 )
+	hist_ch2IntRatio.SetMarkerColor( ROOT.kBlack )
+	hist_ch2IntRatio.GetXaxis().SetTitle("scintillation light / total charge")
+	hist_ch2IntRatio.GetYaxis().SetTitle("Events")
+	hist_ch2IntRatio.SetTitle("")
+	hist_ch2IntRatio.GetXaxis().SetTitleSize( axisTitleSizeX )
+        hist_ch2IntRatio.GetXaxis().SetTitleOffset( axisTitleOffsetX )
+        hist_ch2IntRatio.GetYaxis().SetTitleSize( axisTitleSizeY )
+        hist_ch2IntRatio.GetYaxis().SetTitleOffset( axisTitleOffsetY )
+	hist_ch2IntRatio.Draw("E")
+	maximumY=hist_ch2IntRatio.GetMaximum()
+	lowch2IntRatio=hist_ch2IntRatio.GetBinCenter(hist_ch2IntRatio.FindFirstBinAbove(int(0.3*maximumY)))
+	#highch2IntRatio=hist_ch2IntRatio.GetBinCenter(hist_ch2IntRatio.FindLastBinAbove(int(0.5*maximumY)))
+	maximumX=hist_ch2IntRatio.GetBinCenter(hist_ch2IntRatio.GetMaximumBin())
+	highch2IntRatio = maximumX + (maximumX-lowch2IntRatio)
+	tf1_gaus_IntRatio = ROOT.TF1("tf1_gaus_IntRatio","gaus", 0.0, 1.5)
+	tf1_gaus_IntRatio.SetParameter(1, hist_ch2IntRatio.GetMean())
+	hist_ch2IntRatio.Fit("tf1_gaus_IntRatio","","",lowch2IntRatio, highch2IntRatio)
+	myC.SaveAs(outputDir+run+"_ch2IntRatio_bias"+str(bias_this)+"V.pdf")
+	myC.SaveAs(outputDir+run+"_ch2IntRatio_bias"+str(bias_this)+"V.png")
+	myC.SaveAs(outputDir+run+"_ch2IntRatio_bias"+str(bias_this)+"V.C")
+	mean_ch2IntRatio = tf1_gaus_IntRatio.GetParameter(1)
+	emean_ch2IntRatio = tf1_gaus_IntRatio.GetParError(1)
+	sigma_ch2IntRatio = tf1_gaus_IntRatio.GetParameter(2)
+
+        if hist_ch2IntRatio.Integral() < 10.0:
+                mean_ch2IntRatio = 0.0
+                emean_ch2IntRatio = 0.0
+                sigma_ch2IntRatio = 0.0
+                esigma_ch2IntRatio = 0.0
+
+	ch2IntRatio.append(mean_ch2IntRatio)
+	ech2IntRatio.append(emean_ch2IntRatio)
+
+	print "mean of ch2IntRatio = "+str(hist_ch2IntRatio.GetMean())
+	print "fit mean of ch2IntRatio = "+str(mean_ch2IntRatio)
+	print "fit sigma of ch2IntRatio = "+str(sigma_ch2IntRatio)
+
+
 
 print "bias_val:"
 print bias_val
@@ -332,6 +375,24 @@ myC.SaveAs(outputDir+run+"_ch2Risetime_vs_bias.pdf")
 myC.SaveAs(outputDir+run+"_ch2Risetime_vs_bias.png")
 myC.SaveAs(outputDir+run+"_ch2Risetime_vs_bias.C")
 
+
+gr_ch2IntRatio_vs_bias = ROOT.TGraphErrors(nbins_bias, np.array(bias_val), np.array(ch2IntRatio), np.array(ebias_val), np.array(ech2IntRatio))
+gr_ch2IntRatio_vs_bias.SetMarkerStyle( 20 )
+gr_ch2IntRatio_vs_bias.SetMarkerColor( ROOT.kBlack )
+gr_ch2IntRatio_vs_bias.SetLineWidth( 2 )
+gr_ch2IntRatio_vs_bias.SetLineColor( ROOT.kBlack ) 
+gr_ch2IntRatio_vs_bias.GetXaxis().SetTitle("bias [V]")
+gr_ch2IntRatio_vs_bias.GetYaxis().SetTitle("scintillation light / total charge")
+gr_ch2IntRatio_vs_bias.SetTitle("")
+gr_ch2IntRatio_vs_bias.GetXaxis().SetTitleSize( axisTitleSizeX )
+gr_ch2IntRatio_vs_bias.GetXaxis().SetTitleOffset( axisTitleOffsetX )
+gr_ch2IntRatio_vs_bias.GetYaxis().SetTitleSize( axisTitleSizeY )
+gr_ch2IntRatio_vs_bias.GetYaxis().SetTitleOffset( axisTitleOffsetY )
+gr_ch2IntRatio_vs_bias.GetYaxis().SetRangeUser(0.0, 1.0)
+gr_ch2IntRatio_vs_bias.Draw("AP")
+myC.SaveAs(outputDir+run+"_ch2IntRatio_vs_bias.pdf")
+myC.SaveAs(outputDir+run+"_ch2IntRatio_vs_bias.png")
+myC.SaveAs(outputDir+run+"_ch2IntRatio_vs_bias.C")
 
 
 
